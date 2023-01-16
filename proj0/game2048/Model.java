@@ -138,8 +138,8 @@ public class Model extends Observable {
      * */
     public static boolean emptySpaceExists(Board b) {
         int size = b.size();
-        for (int row = 0; row < size; row += 1) {
-            for (int col = 0; col < size; col += 1) {
+        for (int col = 0; col < size; col += 1) {
+            for (int row = 0; row < size; row += 1) {
                 if (b.tile(col, row) == null) {
                     return true;
                 }
@@ -155,8 +155,8 @@ public class Model extends Observable {
      */
     public static boolean maxTileExists(Board b) {
         int size = b.size();
-        for (int row = 0; row < size; row += 1) {
-            for (int col = 0; col < size; col += 1) {
+        for (int col = 0; col < size; col += 1) {
+            for (int row = 0; row < size; row += 1) {
                 if (b.tile(col, row) != null) {
                     if (b.tile(col, row).value() == MAX_PIECE) {
                         return true;
@@ -174,7 +174,26 @@ public class Model extends Observable {
      * 2. There are two adjacent tiles with the same value.
      */
     public static boolean atLeastOneMoveExists(Board b) {
-        // TODO: Fill in this function.
+        if (emptySpaceExists(b)) {
+            return true;
+        }
+        int size = b.size();
+        /** Check if adjacent tiles on each column have same value*/
+        for (int col = 0; col < size; col += 1) {
+            for (int row = 0; row < size - 1; row += 1) {
+                if (b.tile(col, row).value() == b.tile(col, row + 1).value()) {
+                    return true;
+                }
+            }
+        }
+        /** Check if adjacent tiles on each row have same value*/
+        for (int row = 0; row < size; row += 1) {
+            for (int col = 0; col < size - 1; col += 1) {
+                if (b.tile(col, row).value() == b.tile(col + 1, row).value()) {
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
