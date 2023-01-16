@@ -1,6 +1,7 @@
 package game2048;
 
 import java.util.Formatter;
+import java.util.Iterator;
 import java.util.Observable;
 
 
@@ -169,12 +170,10 @@ public class Model extends Observable {
      *  Empty spaces are stored as null.
      * */
     public static boolean emptySpaceExists(Board b) {
-        int size = b.size();
-        for (int col = 0; col < size; col += 1) {
-            for (int row = 0; row < size; row += 1) {
-                if (b.tile(col, row) == null) {
-                    return true;
-                }
+        Iterator iterator = b.iterator();
+        while (iterator.hasNext()) {
+            if (iterator.next() == null) {
+                return true;
             }
         }
         return false;
@@ -186,14 +185,11 @@ public class Model extends Observable {
      * given a Tile object t, we get its value with t.value().
      */
     public static boolean maxTileExists(Board b) {
-        int size = b.size();
-        for (int col = 0; col < size; col += 1) {
-            for (int row = 0; row < size; row += 1) {
-                if (b.tile(col, row) != null) {
-                    if (b.tile(col, row).value() == MAX_PIECE) {
-                        return true;
-                    }
-                }
+        Iterator iterator = b.iterator();
+        while (iterator.hasNext()) {
+            Tile t = (Tile) iterator.next();
+            if (t != null && t.value() == MAX_PIECE) {
+                return true;
             }
         }
         return false;
@@ -209,26 +205,33 @@ public class Model extends Observable {
         if (emptySpaceExists(b)) {
             return true;
         }
-        int size = b.size();
-        /** Check if adjacent tiles on each column have same value*/
-        for (int col = 0; col < size; col += 1) {
-            for (int row = 0; row < size - 1; row += 1) {
-                if (b.tile(col, row).value() == b.tile(col, row + 1).value()) {
-                    return true;
-                }
+        for (int index = 0; index < b.size(); index += 1) {
+            if (colHasSameValue(b, index)) {
+                return true;
             }
-        }
-        /** Check if adjacent tiles on each row have same value*/
-        for (int row = 0; row < size; row += 1) {
-            for (int col = 0; col < size - 1; col += 1) {
-                if (b.tile(col, row).value() == b.tile(col + 1, row).value()) {
-                    return true;
-                }
+            if (rowHasSameValue(b, index)) {
+                return true;
             }
         }
         return false;
     }
 
+    public static boolean colHasSameValue(Board b, int col) {
+        for (int row = 0; row < b.size() - 1; row += 1) {
+            if (b.tile(col, row).value() == b.tile(col, row + 1).value()) {
+                return true;
+            }
+        }
+        return false;
+    }
+    public static boolean rowHasSameValue(Board b, int row) {
+        for (int col = 0; col < b.size() - 1; col += 1) {
+            if (b.tile(col, row).value() == b.tile(col + 1, row).value()) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     @Override
      /** Returns the model as a string, used for debugging. */
