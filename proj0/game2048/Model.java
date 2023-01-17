@@ -115,34 +115,20 @@ public class Model extends Observable {
         // for the tilt to the Side SIDE. If the board changed, set the
         // changed local variable to true.
         board.setViewingPerspective(side);
-        int size = board.size();
-        Tile t;
-        for (int col = 0; col < size; col += 1) {
-            int checkPoint1 = size - 1;
-            int checkPoint2 = size - 2;
+
+        for (int col = 0; col < board.size(); col += 1) {
+            int checkPoint1 = board.size() - 1;
+            int checkPoint2 = checkPoint1 - 1;
             while (checkPoint2 >= 0) {
-                if (board.tile(col, checkPoint1) == null) {
-                    if (board.tile(col, checkPoint2) != null) {
-                        t = board.tile(col, checkPoint2);
-                        board.move(col, checkPoint1,t);
-                        changed = true;
-                    }
-                } else {
-                    if (board.tile(col, checkPoint2) != null) {
-                        if (board.tile(col, checkPoint2).value() != board.tile(col, checkPoint1).value()) {
-                            checkPoint1 -= 1;
-                            t = board.tile(col, checkPoint2);
-                            board.move(col, checkPoint1, t);
-                            changed = true;
-                        } else {
-                            t = board.tile(col, checkPoint2);
-                            board.move(col, checkPoint1, t);
-                            changed = true;
-                            score = score + 2 * t.value();
-                            checkPoint1 -= 1;
-                        }
-                    }
-                }
+                /** Special handling: board should change, however cp1 is not changed
+                 * Check before calling helper method, otherwise tiles will be updated */
+                if (board.tile(col, checkPoint1) == null
+                        && board.tile(col, checkPoint2) != null) { changed = true; }
+                /** Call helper method to handle check points on the column */
+                int returnedCP1 = handleRowCheckPoint(col, checkPoint1, checkPoint2);
+                /** Other cases cp1 will be updated when board should change */
+                if (checkPoint1 != returnedCP1) { changed = true; }
+                checkPoint1 = returnedCP1;
                 checkPoint2 -= 1;
             }
         }
@@ -152,6 +138,33 @@ public class Model extends Observable {
         }
         board.setViewingPerspective(Side.NORTH);
         return changed;
+    }
+
+    /** Helper method to move tile from (col, row2) to (col, row1) */
+    private void findAndMoveTile(int col, int row2, int row1) {
+        Tile t = board.tile(col, row2);
+        Boolean isMerge = board.move(col, row1, t);
+        if (isMerge) { score += t.value() * 2; }
+    }
+
+    /** Helper method to handle the checking point in one column */
+    private int handleRowCheckPoint(int col, int cp1, int cp2) {
+        if (board.tile(col, cp1) == null) {
+            if (board.tile(col, cp2) != null) {
+                findAndMoveTile(col, cp2, cp1);
+            }
+        } else {
+            if (board.tile(col, cp2) != null) {
+                if (board.tile(col, cp2).value() != board.tile(col, cp1).value()) {
+                    cp1 -= 1;
+                    findAndMoveTile(col, cp2, cp1);
+                } else {
+                    findAndMoveTile(col, cp2, cp1);
+                    cp1 -= 1;
+                }
+            }
+        }
+        return cp1;
     }
 
     /** Checks if the game is over and sets the gameOver variable
