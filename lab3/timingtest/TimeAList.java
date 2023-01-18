@@ -22,6 +22,25 @@ public class TimeAList {
     }
 
     public static void timeAListConstruction() {
-        // TODO: YOUR CODE HERE
+        /** Instantiated array lists to track the numbers in the testing. */
+        AList<Integer> Ns = new AList<>();
+        AList<Double> times = new AList<>();
+        AList<Integer> opCounts = new AList<>();
+
+        for (int i = 0; i < 8; i += 1) {
+            int lSize= (int) Math.pow(2, i) * 1000;
+            AList<Integer> testedL = new AList<>();
+            int j = 0;
+            Stopwatch sw = new Stopwatch();
+            while (j < lSize) {
+                testedL.addLast(j);
+                j += 1;
+            }
+            double timeInSeconds = sw.elapsedTime();
+            Ns.addLast(lSize);
+            times.addLast(timeInSeconds);
+            opCounts.addLast(lSize);
+        }
+        printTimingTable(Ns, times, opCounts);
     }
 }
