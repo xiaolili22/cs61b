@@ -26,14 +26,6 @@ public class LinkedListDeque<Item> implements Deque<Item> {
             size = 0;
         }
 
-        public LinkedListDeque(Item x) {
-            sentinel = new Node(null, null, null);
-            Node node = new Node(x, sentinel, sentinel);
-            sentinel.next = node;
-            sentinel.prev = node;
-            size = 1;
-        }
-
         /** Ad x to the front to the list. */
         @Override
         public void addFirst(Item x) {
@@ -64,8 +56,12 @@ public class LinkedListDeque<Item> implements Deque<Item> {
         /** Prints the items in the deque from first to last. */
         @Override
         public void printDeque() {
-            for (Node node = sentinel.next; node.item != null; node = node.next) {
+            /** Use size to track the iteration.
+             * In case in the future to support adding node with null item. */
+            Node node = sentinel.next;
+            for (int i = 0; i < size; i += 1) {
                 System.out.print(node.item + " ");
+                node = node.next;
             }
             System.out.println();
         }
@@ -73,35 +69,29 @@ public class LinkedListDeque<Item> implements Deque<Item> {
         /** Removes and returns the item at the front of the deque. */
         @Override
         public Item removeFirst() {
-            Node node = sentinel.next;
-            /** If nothing exists, returns null. Why node == null not working? */
-            if (node.item == null) {
+            /** If nothing exists, returns null. */
+            if (size == 0) {
                 return null;
             }
+
+            Node node = sentinel.next;
             sentinel.next = node.next;
             node.next.prev = sentinel;
             size = size - 1;
-            Item returnItem = node.item;
-            node.prev = null;
-            node.next = null;
-            node.item = null;
-            return returnItem;
+            return node.item;
         }
 
         @Override
         public Item removeLast() {
-            Node node = sentinel.prev;
-            if (node.item == null) {
+            if (size == 0) {
                 return null;
             }
+
+            Node node = sentinel.prev;
             sentinel.prev = node.prev;
             node.prev.next = sentinel;
             size = size - 1;
-            Item returnItem = node.item;
-            node.prev = null;
-            node.next = null;
-            node.item = null;
-            return returnItem;
+            return node.item;
         }
 
         @Override
@@ -109,6 +99,7 @@ public class LinkedListDeque<Item> implements Deque<Item> {
             if (index < 0 || index >= size) {
                 return null;
             }
+
             Node node = sentinel.next;
             for (int i = 0; i < index; i += 1) {
                 node = node.next;
@@ -116,26 +107,27 @@ public class LinkedListDeque<Item> implements Deque<Item> {
             return node.item;
         }
 
-         /** Same as get, but uses recursion. */
-         /**
+         /** Same as get, but uses recursion.
+          * User helper method to track the index. */
          public Item getRecursive(int index) {
-            if (index < 0 || index >= size) {
-                return null;
-            }
+             return getRecursiveHelper(index, 0, sentinel.next);
          }
-         */
+         private Item getRecursiveHelper(int index, int n, Node curr) {
+             if (index < 0 || index >= size) {
+                 return null;
+             }
+             if (index == n) {
+                 return curr.item;
+             }
+             return getRecursiveHelper(index, n + 1, curr.next);
+         }
 
         public static void main(String[] args) {
             LinkedListDeque<Integer> lld = new LinkedListDeque<>();
-            System.out.println("removeFirst on empty list " + lld.removeFirst());
             lld.addFirst(15);
             lld.addLast(22);
             lld.addLast(29);
+            System.out.println(lld.getRecursive(0));
             lld.printDeque();
-            System.out.println("The item on index 2 is " + lld.get(2));
-            int a = lld.removeFirst();
-            System.out.println("removeFirst " + a);
-            lld.printDeque();
-            System.out.println("The item on index 200 is " + lld.get(200));
         }
 }

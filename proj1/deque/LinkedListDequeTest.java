@@ -117,4 +117,29 @@ public class LinkedListDequeTest {
             assertEquals("Should have the same value", i, (double) lld1.removeLast(), 0.0);
         }
     }
+
+    @Test
+    /** Add elements to the deque, check if get method returns the correct item. */
+    public void getAndGetRecursiveTest() {
+        LinkedListDeque<Integer> lld1 = new LinkedListDeque<>();
+        assertEquals("Empty deque, get from index 0 should return null", lld1.get(0), null);
+        assertEquals("Empty deque, recursiveGet from index 0 should return null", lld1.getRecursive(0), null);
+
+        lld1.addFirst(8);
+        lld1.addFirst(3);
+        lld1.addLast(15);
+        lld1.addLast(19);
+        assertEquals("Get from index 0 should return 3", (int) lld1.get(0), 3);
+        assertEquals("recursiveGet from index 0 should return 3", (int) lld1.getRecursive(0), 3);
+
+        assertEquals("Get from index 1 should return 8", (int) lld1.get(1), 8);
+        assertEquals("recursiveGet from index 1 should return 8", (int) lld1.getRecursive(1), 8);
+
+        assertEquals("Get from index 2 should return 15", (int) lld1.get(2), 15);
+        assertEquals("recursiveGet from index 2 should return 15", (int) lld1.getRecursive(2), 15);
+
+        assertEquals("Not valid index, get from index 100 should return null", lld1.get(100), null);
+        assertEquals("Not valid index, recursiveGet from index 100 should return null", lld1.getRecursive(100), null);
+
+    }
 }

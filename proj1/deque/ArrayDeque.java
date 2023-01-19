@@ -34,43 +34,60 @@ public class ArrayDeque<Item> {
         nextFirst = minusOne(nextFirst);
         size = size + 1;
     }
+
     public void addLast(Item item) {
         items[nextLast] = item;
         nextLast = plusOne(nextLast);
         size = size + 1;
     }
+
     public boolean isEmpty() {
         return size == 0;
     }
+
     public int size() {
         return size;
     }
+
     public void printDeque() {
-        int ref = nextFirst;
+        int ref = plusOne(nextFirst);
         for (int i = 0; i < size; i += 1) {
-            System.out.print(items[plusOne(ref)] + " ");
+            System.out.print(items[ref] + " ");
             ref = plusOne(ref);
         }
         System.out.println();
     }
 
     public Item removeFirst() {
+        if (size == 0) {
+            return null;
+        }
         /** Reset the original first to be null. */
         Item returnItem = items[plusOne(nextFirst)];
+        /** Null out deleted items. */
         items[plusOne(nextFirst)] = null;
         nextFirst = plusOne(nextFirst);
         size = size - 1;
         return returnItem;
     }
+
     public Item removeLast() {
+        if (size == 0) {
+            return null;
+        }
         Item returnItem = items[minusOne(nextLast)];
         items[minusOne(nextLast)] = null;
         nextLast = minusOne(nextLast);
         size = size - 1;
         return returnItem;
     }
+
     public Item get(int index) {
-        return items[index];
+        if (index < 0 || index >= size) {
+            return null;
+        }
+        int ref = (plusOne(nextFirst) + index) % items.length;
+        return items[ref];
     }
 
     public static void main(String[] args) {
@@ -79,8 +96,10 @@ public class ArrayDeque<Item> {
         ad.addFirst(4);
         ad.addLast(9);
         ad.printDeque();
+        System.out.println(ad.get(1));
         ad.removeLast();
         ad.printDeque();
+        System.out.println(ad.get(1));
 
     }
 
