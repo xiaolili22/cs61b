@@ -1,7 +1,5 @@
 package deque;
 
-import afu.org.checkerframework.checker.oigj.qual.O;
-
 import java.util.Comparator;
 
 public class MaxArrayDeque<Item> extends ArrayDeque<Item> {
@@ -38,18 +36,19 @@ public class MaxArrayDeque<Item> extends ArrayDeque<Item> {
 
     @Override
     public boolean equals(Object o) {
-        if (!(o instanceof MaxArrayDeque mad1)) {
-            return false;
-        }
-        if (mad1.size() != super.size()) {
-            return false;
-        }
-        for (int i = 0; i < super.size(); i += 1) {
-            if (mad1.get(i) != super.get(i)) {
+        if (o instanceof MaxArrayDeque) {
+            MaxArrayDeque<?> anotherMad = (MaxArrayDeque<?>) o;
+            if (anotherMad.size() != super.size()) {
                 return false;
             }
+            for (int i = 0; i < super.size(); i += 1) {
+                if (anotherMad.get(i) != super.get(i)) {
+                    return false;
+                }
+            }
+            return true;
         }
-        return true;
+        return false;
     }
 
 }
