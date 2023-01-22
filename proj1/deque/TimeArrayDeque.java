@@ -22,7 +22,7 @@ public class TimeArrayDeque {
 
     public static void timeArrayDequeConstruction() {
         /** Instantiated array lists to track the numbers in the testing. */
-        ArrayDeque<Integer> Ns = new ArrayDeque<>();
+        ArrayDeque<Integer> ns = new ArrayDeque<>();
         ArrayDeque<Double> times = new ArrayDeque<>();
         ArrayDeque<Integer> opCounts = new ArrayDeque<>();
 
@@ -45,10 +45,10 @@ public class TimeArrayDeque {
                 j -= 1;
             }
             double timeInSeconds = sw.elapsedTime();
-            Ns.addLast(lSize);
+            ns.addLast(lSize);
             times.addLast(timeInSeconds);
             opCounts.addLast(lSize);
         }
-        printTimingTable(Ns, times, opCounts);
+        printTimingTable(ns, times, opCounts);
     }
 }

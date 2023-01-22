@@ -2,13 +2,13 @@ package deque;
 
 import java.util.Iterator;
 
-public class LinkedListDeque<Item> implements Deque<Item>, Iterable<Item> {
+public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
     private class Node {
-        private Item item;
+        private T item;
         private Node prev;
         private Node next;
 
-        Node(Item i, Node p, Node n) {
+        Node(T i, Node p, Node n) {
             item = i;
             prev = p;
             next = n;
@@ -30,7 +30,7 @@ public class LinkedListDeque<Item> implements Deque<Item>, Iterable<Item> {
 
     /** Ad x to the front to the list. */
     @Override
-    public void addFirst(Item x) {
+    public void addFirst(T x) {
         Node node = new Node(x, sentinel, sentinel.next);
         sentinel.next.prev = node;
         sentinel.next = node;
@@ -38,7 +38,7 @@ public class LinkedListDeque<Item> implements Deque<Item>, Iterable<Item> {
     }
 
     @Override
-    public void addLast(Item x) {
+    public void addLast(T x) {
         Node node = new Node(x, sentinel.prev, sentinel);
         sentinel.prev.next = node;
         sentinel.prev = node;
@@ -65,7 +65,7 @@ public class LinkedListDeque<Item> implements Deque<Item>, Iterable<Item> {
 
     /** Removes and returns the item at the front of the deque. */
     @Override
-    public Item removeFirst() {
+    public T removeFirst() {
         /** If nothing exists, returns null. */
         if (size == 0) {
             return null;
@@ -79,7 +79,7 @@ public class LinkedListDeque<Item> implements Deque<Item>, Iterable<Item> {
     }
 
     @Override
-    public Item removeLast() {
+    public T removeLast() {
         if (size == 0) {
             return null;
         }
@@ -92,7 +92,7 @@ public class LinkedListDeque<Item> implements Deque<Item>, Iterable<Item> {
     }
 
     @Override
-    public Item get(int index) {
+    public T get(int index) {
         if (index < 0 || index >= size) {
             return null;
         }
@@ -106,10 +106,10 @@ public class LinkedListDeque<Item> implements Deque<Item>, Iterable<Item> {
 
     /** Same as get, but uses recursion.
      * User helper method to track the index. */
-    public Item getRecursive(int index) {
+    public T getRecursive(int index) {
         return getRecursiveHelper(index, 0, sentinel.next);
     }
-    private Item getRecursiveHelper(int index, int n, Node curr) {
+    private T getRecursiveHelper(int index, int n, Node curr) {
         if (index < 0 || index >= size) {
             return null;
         }
@@ -136,11 +136,11 @@ public class LinkedListDeque<Item> implements Deque<Item>, Iterable<Item> {
         return false;
     }
 
-    public Iterator<Item> iterator() {
+    public Iterator<T> iterator() {
         return new LLDequeIterator();
     }
 
-    private class LLDequeIterator implements Iterator<Item> {
+    private class LLDequeIterator implements Iterator<T> {
         private int wizPos;
         LLDequeIterator() {
             wizPos = 0;
@@ -148,8 +148,8 @@ public class LinkedListDeque<Item> implements Deque<Item>, Iterable<Item> {
         public boolean hasNext() {
             return wizPos < size;
         }
-        public Item next() {
-            Item returnItem = get(wizPos);
+        public T next() {
+            T returnItem = get(wizPos);
             wizPos += 1;
             return returnItem;
         }

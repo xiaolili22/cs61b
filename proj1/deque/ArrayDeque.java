@@ -2,14 +2,14 @@ package deque;
 
 import java.util.Iterator;
 
-public class ArrayDeque<Item> implements Deque<Item>, Iterable<Item> {
-    private Item[] items;
+public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
+    private T[] items;
     private int size;
     private int nextFirst;
     private int nextLast;
 
     public ArrayDeque() {
-        items = (Item[]) new Object[8];
+        items = (T[]) new Object[8];
         size = 0;
         nextFirst = items.length / 2;
         nextLast = nextFirst + 1;
@@ -25,7 +25,7 @@ public class ArrayDeque<Item> implements Deque<Item>, Iterable<Item> {
 
     /** Helper method to find the next index of current one.
      * index is the current index, n is the current array's length. */
-    private int plusOne(int index, Item[] a) {
+    private int plusOne(int index, T[] a) {
         if (index + 1 >= a.length) {
             return index + 1 - a.length;
         }
@@ -33,7 +33,7 @@ public class ArrayDeque<Item> implements Deque<Item>, Iterable<Item> {
     }
 
     @Override
-    public void addFirst(Item item) {
+    public void addFirst(T item) {
         if (size == items.length) {
             resize((int) (size * 1.5));
         }
@@ -43,7 +43,7 @@ public class ArrayDeque<Item> implements Deque<Item>, Iterable<Item> {
     }
 
     @Override
-    public void addLast(Item item) {
+    public void addLast(T item) {
         if (size == items.length) {
             resize((int) (size * 1.5));
         }
@@ -68,7 +68,7 @@ public class ArrayDeque<Item> implements Deque<Item>, Iterable<Item> {
     }
 
     @Override
-    public Item removeFirst() {
+    public T removeFirst() {
         if (size == 0) {
             return null;
         }
@@ -79,7 +79,7 @@ public class ArrayDeque<Item> implements Deque<Item>, Iterable<Item> {
             resize(items.length / 2);
         }
         /** Reset the original first to be null. */
-        Item returnItem = items[plusOne(nextFirst, items)];
+        T returnItem = items[plusOne(nextFirst, items)];
         /** Null out deleted items. */
         items[plusOne(nextFirst, items)] = null;
         nextFirst = plusOne(nextFirst, items);
@@ -88,14 +88,14 @@ public class ArrayDeque<Item> implements Deque<Item>, Iterable<Item> {
     }
 
     @Override
-    public Item removeLast() {
+    public T removeLast() {
         if (size == 0) {
             return null;
         }
         if (items.length > 16 && size - 1 < items.length * 0.25) {
             resize(items.length / 2);
         }
-        Item returnItem = items[minusOne(nextLast)];
+        T returnItem = items[minusOne(nextLast)];
         items[minusOne(nextLast)] = null;
         nextLast = minusOne(nextLast);
         size = size - 1;
@@ -103,7 +103,7 @@ public class ArrayDeque<Item> implements Deque<Item>, Iterable<Item> {
     }
 
     @Override
-    public Item get(int index) {
+    public T get(int index) {
         if (index < 0 || index >= size) {
             return null;
         }
@@ -111,7 +111,7 @@ public class ArrayDeque<Item> implements Deque<Item>, Iterable<Item> {
         return items[ref];
     }
     private void resize(int capacity) {
-        Item[] resizedArray = (Item[]) new Object[capacity];
+        T[] resizedArray = (T[]) new Object[capacity];
         int resizedNextFirst = resizedArray.length / 2;
         int resizedNextLast = resizedNextFirst + 1;
         /** Copy items in original array to the new array. */
@@ -146,11 +146,11 @@ public class ArrayDeque<Item> implements Deque<Item>, Iterable<Item> {
         return false;
     }
 
-    public Iterator<Item> iterator() {
+    public Iterator<T> iterator() {
         return new ArrayDequeIterator();
     }
 
-    private class ArrayDequeIterator implements Iterator<Item> {
+    private class ArrayDequeIterator implements Iterator<T> {
         private int wizPos;
         ArrayDequeIterator() {
             wizPos = 0;
@@ -158,8 +158,8 @@ public class ArrayDeque<Item> implements Deque<Item>, Iterable<Item> {
         public boolean hasNext() {
             return wizPos < size;
         }
-        public Item next() {
-            Item returnItem = get(wizPos);
+        public T next() {
+            T returnItem = get(wizPos);
             wizPos += 1;
             return returnItem;
         }
