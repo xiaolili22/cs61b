@@ -132,7 +132,8 @@ public class ArrayDeque<Item> implements Deque<Item>, Iterable<Item> {
 
     @Override
     public boolean equals(Object o) {
-        if (o instanceof ArrayDeque anotherAd) {
+        if (o instanceof ArrayDeque) {
+            ArrayDeque<?> anotherAd = (ArrayDeque<?>) o;
             if (anotherAd.size() != size()) {
                 return false;
             }
