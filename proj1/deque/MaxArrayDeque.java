@@ -50,5 +50,5 @@ public class MaxArrayDeque<Item> extends ArrayDeque<Item> {
         }
         return false;
     }
-
 }
+

@@ -1,6 +1,5 @@
 package deque;
 
-import java.lang.reflect.Array;
 import java.util.Iterator;
 
 public class ArrayDeque<Item> implements Deque<Item>, Iterable<Item> {
@@ -76,7 +75,7 @@ public class ArrayDeque<Item> implements Deque<Item>, Iterable<Item> {
         /** For array of length 16 or more,
          * check the usage of the array,
          * if below 25%, resize down to half of the original length. */
-        if (items.length > 16 && size - 1 < items.length * 0.25 ) {
+        if (items.length > 16 && size - 1 < items.length * 0.25) {
             resize(items.length / 2);
         }
         /** Reset the original first to be null. */
@@ -93,7 +92,7 @@ public class ArrayDeque<Item> implements Deque<Item>, Iterable<Item> {
         if (size == 0) {
             return null;
         }
-        if (items.length > 16 && size - 1 < items.length * 0.25 ) {
+        if (items.length > 16 && size - 1 < items.length * 0.25) {
             resize(items.length / 2);
         }
         Item returnItem = items[minusOne(nextLast)];
@@ -122,7 +121,7 @@ public class ArrayDeque<Item> implements Deque<Item>, Iterable<Item> {
             resizedArray[resizedRef] = items[ref];
             ref = plusOne(ref, items);
             resizedRef = plusOne(resizedRef, resizedArray);
-            resizedNextLast =plusOne(resizedNextLast, resizedArray);
+            resizedNextLast = plusOne(resizedNextLast, resizedArray);
         }
 
         nextFirst = resizedNextFirst;
@@ -153,7 +152,7 @@ public class ArrayDeque<Item> implements Deque<Item>, Iterable<Item> {
 
     private class ArrayDequeIterator implements Iterator<Item> {
         private int wizPos;
-        public ArrayDequeIterator() {
+        ArrayDequeIterator() {
             wizPos = 0;
         }
         public boolean hasNext() {
@@ -177,5 +176,4 @@ public class ArrayDeque<Item> implements Deque<Item>, Iterable<Item> {
             System.out.println(i);
         }
     }
-
 }

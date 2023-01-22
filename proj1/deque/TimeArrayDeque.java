@@ -2,11 +2,13 @@ package deque;
 import edu.princeton.cs.algs4.Stopwatch;
 
 public class TimeArrayDeque {
-    private static void printTimingTable(ArrayDeque<Integer> Ns, ArrayDeque<Double> times, ArrayDeque<Integer> opCounts) {
+    private static void printTimingTable(ArrayDeque<Integer> ns,
+                                         ArrayDeque<Double> times,
+                                         ArrayDeque<Integer> opCounts) {
         System.out.printf("%12s %12s %12s %12s\n", "N", "time (s)", "# ops", "microsec/op");
         System.out.printf("------------------------------------------------------------\n");
-        for (int i = 0; i < Ns.size(); i += 1) {
-            int N = Ns.get(i);
+        for (int i = 0; i < ns.size(); i += 1) {
+            int N = ns.get(i);
             double time = times.get(i);
             int opCount = opCounts.get(i);
             double timePerOp = time / opCount * 1e6;
@@ -25,7 +27,7 @@ public class TimeArrayDeque {
         ArrayDeque<Integer> opCounts = new ArrayDeque<>();
 
         for (int i = 0; i < 16; i += 1) {
-            int lSize= (int) Math.pow(2, i) * 1000;
+            int lSize = (int) Math.pow(2, i) * 1000;
             ArrayDeque<Integer> ad1 = new ArrayDeque<>();
             int j = 0;
             /** Track the time used to add and remove. */
@@ -38,7 +40,7 @@ public class TimeArrayDeque {
                 ad1.addLast(j);
                 j += 1;
             }
-            while ( j > lSize / 2) {
+            while (j > lSize / 2) {
                 ad1.removeFirst();
                 j -= 1;
             }

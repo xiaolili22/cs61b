@@ -4,11 +4,11 @@ import java.util.Iterator;
 
 public class LinkedListDeque<Item> implements Deque<Item>, Iterable<Item> {
     private class Node {
-        public Item item;
-        public Node prev;
-        public Node next;
+        private Item item;
+        private Node prev;
+        private Node next;
 
-        public Node(Item i, Node p, Node n) {
+        Node(Item i, Node p, Node n) {
             item = i;
             prev = p;
             next = n;
@@ -104,20 +104,20 @@ public class LinkedListDeque<Item> implements Deque<Item>, Iterable<Item> {
         return node.item;
     }
 
-     /** Same as get, but uses recursion.
-      * User helper method to track the index. */
-     public Item getRecursive(int index) {
-         return getRecursiveHelper(index, 0, sentinel.next);
-     }
-     private Item getRecursiveHelper(int index, int n, Node curr) {
-         if (index < 0 || index >= size) {
-             return null;
-         }
-         if (index == n) {
-             return curr.item;
-         }
-         return getRecursiveHelper(index, n + 1, curr.next);
-     }
+    /** Same as get, but uses recursion.
+     * User helper method to track the index. */
+    public Item getRecursive(int index) {
+        return getRecursiveHelper(index, 0, sentinel.next);
+    }
+    private Item getRecursiveHelper(int index, int n, Node curr) {
+        if (index < 0 || index >= size) {
+            return null;
+        }
+        if (index == n) {
+            return curr.item;
+        }
+        return getRecursiveHelper(index, n + 1, curr.next);
+    }
 
     @Override
     public boolean equals(Object o) {
@@ -141,18 +141,18 @@ public class LinkedListDeque<Item> implements Deque<Item>, Iterable<Item> {
     }
 
     private class LLDequeIterator implements Iterator<Item> {
-         private int wizPos;
-         public LLDequeIterator() {
-             wizPos = 0;
-         }
-         public boolean hasNext() {
-             return wizPos < size;
-         }
-         public Item next() {
-             Item returnItem = get(wizPos);
-             wizPos += 1;
-             return returnItem;
-         }
+        private int wizPos;
+        LLDequeIterator() {
+            wizPos = 0;
+        }
+        public boolean hasNext() {
+            return wizPos < size;
+        }
+        public Item next() {
+            Item returnItem = get(wizPos);
+            wizPos += 1;
+            return returnItem;
+        }
     }
 
     public static void main(String[] args) {
@@ -168,6 +168,5 @@ public class LinkedListDeque<Item> implements Deque<Item>, Iterable<Item> {
         for (String i : lld2) {
             System.out.println(i);
         }
-
     }
 }

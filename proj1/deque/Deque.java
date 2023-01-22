@@ -3,7 +3,7 @@ package deque;
 public interface Deque<Item> {
     void addFirst(Item item);
     void addLast(Item item);
-    default public boolean isEmpty() {
+    default boolean isEmpty() {
         return size() == 0;
     }
     int size();
@@ -11,5 +11,4 @@ public interface Deque<Item> {
     Item removeFirst();
     Item removeLast();
     Item get(int index);
-
 }
