@@ -142,4 +142,23 @@ public class LinkedListDequeTest {
         assertEquals("Not valid index, recursiveGet from index 100 should return null", lld1.getRecursive(100), null);
 
     }
+
+    @Test
+    public void testIsEqual() {
+        LinkedListDeque<String> lld1 = new LinkedListDeque<>();
+        LinkedListDeque<String> lld2 = new LinkedListDeque<>();
+        LinkedListDeque<String> lld3 = new LinkedListDeque<>();
+
+        lld1.addLast("first");
+        lld1.addLast("second");
+
+        lld2.addLast("first");
+        lld2.addLast("second");
+
+        lld3.addLast("first");
+        lld3.addFirst("second");
+
+        assertTrue(lld1.equals(lld2));
+        assertFalse(lld1.equals(lld3));
+    }
 }
