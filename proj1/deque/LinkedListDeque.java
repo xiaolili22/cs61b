@@ -121,18 +121,18 @@ public class LinkedListDeque<Item> implements Deque<Item>, Iterable<Item> {
 
     @Override
     public boolean equals(Object o) {
-        if (!(o instanceof LinkedListDeque lld1)) {
-            return false;
-        }
-        if (lld1.size() != size()) {
-            return false;
-        }
-        for (int i = 0; i < size(); i += 1) {
-            if (lld1.get(i) != get(i)) {
+        if (o instanceof LinkedListDeque lld1) {
+            if (lld1.size() != size()) {
                 return false;
             }
+            for (int i = 0; i < size(); i += 1) {
+                if (lld1.get(i) != get(i)) {
+                    return false;
+                }
+            }
+            return true;
         }
-        return true;
+        return false;
     }
 
     public Iterator<Item> iterator() {
