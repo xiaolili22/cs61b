@@ -1,6 +1,7 @@
 package deque;
 
 import java.util.Iterator;
+import java.util.Objects;
 
 public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
     private class Node {
@@ -122,13 +123,13 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
     @Override
     public boolean equals(Object o) {
         /** LinkedListDeque and ArrayDeques with the same elements should be equal. */
-        if (o instanceof ArrayDeque || o instanceof LinkedListDeque) {
+        if (o instanceof Deque) {
             Deque<?> anotherD = (Deque<?>) o;
             if (anotherD.size() != size) {
                 return false;
             }
             for (int i = 0; i < size; i += 1) {
-                if (anotherD.get(i) != get(i)) {
+                if(!Objects.deepEquals(anotherD.get(i), get(i))) {
                     return false;
                 }
             }

@@ -147,25 +147,20 @@ public class LinkedListDequeTest {
     public void testIsEqual() {
         LinkedListDeque<String> lld1 = new LinkedListDeque<>();
         LinkedListDeque<String> lld2 = new LinkedListDeque<>();
-        LinkedListDeque<String> lld3 = new LinkedListDeque<>();
-        LinkedListDeque<Integer> lld4 = new LinkedListDeque<>();
         ArrayDeque<String> ad1 = new ArrayDeque<>();
+        assertEquals(lld1, lld2);
 
         lld1.addLast("first");
         lld1.addLast("second");
+        assertNotEquals(lld1, lld2);
 
         lld2.addLast("first");
         lld2.addLast("second");
+        assertEquals(lld1, lld2);
 
-        lld3.addLast("first");
-        lld3.addFirst("second");
 
         ad1.addLast("first");
         ad1.addLast("second");
-
-        assertEquals(lld1, lld2);
-        assertNotEquals(lld1, lld3);
         assertEquals(lld1, ad1);
-        assertNotEquals(lld1, lld4);
     }
 }

@@ -154,28 +154,42 @@ public class ArrayDequeTest {
     @Test
     public void testIsEqual() {
         ArrayDeque<Integer> ad1 = new ArrayDeque<>();
-        ad1.addFirst(1);
-        ad1.addFirst(2);
-        ad1.addFirst(3);
-
         ArrayDeque<Integer> ad2 = new ArrayDeque<>();
-        ad2.addFirst(1);
-        ad2.addFirst(2);
-        ad2.addFirst(3);
-
         assertEquals(ad1, ad2);
 
-        ArrayDeque<Integer> ad3 = new ArrayDeque<>();
-        assertNotEquals(ad1, ad3);
+        ad1.addFirst(1);
+        ad1.addFirst(2);
+        assertNotEquals(ad1, ad2);
 
-        /** Test LinkedListDeque with same items. */
-        LinkedListDeque<Integer> lld1 = new LinkedListDeque<>();
-        lld1.addFirst(1);
-        lld1.addFirst(2);
-        lld1.addFirst(3);
-        assertEquals(ad1, lld1);
+        ad2.addFirst(1);
+        assertNotEquals(ad1, ad2);
+        ad2.addFirst(2);
+        assertEquals(ad1, ad2);
 
         ArrayDeque<Integer> ad5 = ad1;
         assertEquals(ad1, ad5);
+    }
+
+    @Test
+    public void equalWithLinkedListDeque() {
+        ArrayDeque<Integer> ad1 = new ArrayDeque<>();
+        LinkedListDeque<Integer> lld1 = new LinkedListDeque<>();
+        assertEquals(ad1, lld1);
+
+        ad1.addFirst(1);
+        ad1.addFirst(2);
+        assertNotEquals(ad1, lld1);
+
+        lld1.addFirst(1);
+        lld1.addFirst(2);
+        assertEquals(ad1, lld1);
+
+        ArrayDeque<int[]> ad3 = new ArrayDeque<>();
+        ArrayDeque<int[]> ad4 = new ArrayDeque<>();
+        ad3.addFirst(new int[]{1, 2, 3});
+        ad3.addLast(new int[]{4, 5, 6});
+        ad4.addFirst(new int[]{1, 2, 3});
+        ad4.addLast(new int[]{4, 5, 6});
+        assertEquals(ad3, ad4);
     }
 }
