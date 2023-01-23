@@ -157,12 +157,25 @@ public class ArrayDequeTest {
         ad1.addFirst(1);
         ad1.addFirst(2);
         ad1.addFirst(3);
+
         ArrayDeque<Integer> ad2 = new ArrayDeque<>();
         ad2.addFirst(1);
         ad2.addFirst(2);
         ad2.addFirst(3);
-        assertTrue(ad1.equals(ad2));
+
+        assertEquals(ad1, ad2);
+
         ArrayDeque<Integer> ad3 = new ArrayDeque<>();
-        assertFalse(ad1.equals(ad3));
+        assertNotEquals(ad1, ad3);
+
+        /** Test LinkedListDeque with same items. */
+        LinkedListDeque<Integer> lld1 = new LinkedListDeque<>();
+        lld1.addFirst(1);
+        lld1.addFirst(2);
+        lld1.addFirst(3);
+        assertEquals(ad1, lld1);
+
+        ArrayDeque<Integer> ad5 = ad1;
+        assertEquals(ad1, ad5);
     }
 }
