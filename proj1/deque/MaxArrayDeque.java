@@ -33,22 +33,6 @@ public class MaxArrayDeque<T> extends ArrayDeque<T> {
         }
         return super.get(maxDex);
     }
-
-    @Override
-    public boolean equals(Object o) {
-        if (o instanceof MaxArrayDeque) {
-            MaxArrayDeque<?> anotherMad = (MaxArrayDeque<?>) o;
-            if (anotherMad.size() != super.size()) {
-                return false;
-            }
-            for (int i = 0; i < super.size(); i += 1) {
-                if (anotherMad.get(i) != super.get(i)) {
-                    return false;
-                }
-            }
-            return true;
-        }
-        return false;
-    }
 }
+
 

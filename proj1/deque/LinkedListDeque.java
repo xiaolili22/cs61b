@@ -121,6 +121,12 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
 
     @Override
     public boolean equals(Object o) {
+        if (o == null) {
+            return false;
+        }
+        if (o == this) {
+            return true;
+        }
         if (o instanceof LinkedListDeque) {
             LinkedListDeque<?> anotherLld = (LinkedListDeque<?>) o;
             if (anotherLld.size() != size()) {
@@ -154,19 +160,5 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
             return returnItem;
         }
     }
-
-    public static void main(String[] args) {
-        LinkedListDeque<Integer> lld1 = new LinkedListDeque<>();
-        lld1.addFirst(15);
-        lld1.addLast(29);
-        System.out.println(lld1.getRecursive(0));
-        lld1.printDeque();
-
-        LinkedListDeque<String> lld2 = new LinkedListDeque<>();
-        lld2.addFirst("Beautiful");
-        lld2.addLast("day!");
-        for (String i : lld2) {
-            System.out.println(i);
-        }
-    }
 }
+
