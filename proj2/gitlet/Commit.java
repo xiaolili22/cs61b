@@ -1,12 +1,10 @@
 package gitlet;
 
+import java.io.File;
 import java.io.Serializable;
 import java.util.Date;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.TreeMap;
 
-import static gitlet.Repository.logs;
+import static gitlet.Repository.COMMITS_OF_BRANCH_DIR;
 import static gitlet.Utils.*;
 
 /** Represents a gitlet commit object.
@@ -16,62 +14,46 @@ import static gitlet.Utils.*;
  *  @author Xiaoli Li
  */
 public class Commit implements Serializable {
-    /**
-     * List all instance variables of the Commit class here with a useful
-     * comment above them describing what that variable represents and how that
-     * variable is used. We've provided one example for `message`.
-     */
 
-    /** The message of this Commit. */
-    public String message;
-    /** Commit time. */
-    public String timestamp;
-    /** SHA1 of this Commit. */
-    public String ID;
-    /** TreeMap that records a mapping of file names to blob references. */
-    public Map<String, String> fileBlobMapping;
+    private String message;
+    private String timestamp;
+    private String parent;
+    // TODO: Something that keeps track of what files this commit is tracking
+    // TODO: ?? TreeMap that records a mapping of file names to blob references
+    //public Map<String, String> fileBlobMapping;
 
     /** No-argument constructor for the initial commit. */
     public Commit() {
         this.message = "initial commit";
         this.timestamp = (new Date(0)).toString();
-        fileBlobMapping = new TreeMap<>();
-        //setID();
+        this.parent = null;
     }
 
     /** Constructor with arguments. */
-    public Commit(String message, Date commitTime) {
+    public Commit(String message, String parent) {
         this.message = message;
-        this.timestamp = commitTime.toString();
-        handleStagingArea();
-        //setID();
+        this.timestamp = (new Date()).toString();
+        this.parent = parent;
     }
 
-    /** Read from logs to retrieve the commits history. */
-    public static LinkedList<Commit> getCommitsHistory() {
-        return (LinkedList<Commit>) readObject(logs, LinkedList.class);
+    public String getMessage() {
+        return this.message;
     }
 
-    private void setID() {
-        this.ID = Utils.sha1(this);
+    public String getTimestamp() {
+        return this.timestamp;
+    }
+
+    public String getParent() {
+        return this.parent;
     }
 
     // TODO: save modified files into blobs
-    /**
-     * All modified files will be saved at following path
-     * .gitlet/objects/[first_two_digits_of_this_commit_id]/[leftover_digits_of_this_commit_id]
-     * */
-    private void handleStagingArea() {
-        // Map<String, String> stagingArea = readObject(index);
-        Map<String, String> prevMapping = Commit.getCommitsHistory().get(0).fileBlobMapping;
-        // TODO:
-        return;
+
+    public void saveCommit(String ID, String path) {
+        File commits = join(COMMITS_OF_BRANCH_DIR, path);
+        writeObject(commits, this);
     }
 
-    public void saveCommit() {
-        LinkedList<Commit> commits = Commit.getCommitsHistory();
-        /** Update the commits history and save it back to file. */
-        commits.addFirst(this);
-        writeObject(logs, commits);
-    }
+
 }

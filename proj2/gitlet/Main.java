@@ -32,7 +32,7 @@ public class Main {
             /** Handle `commit [message]` command */
             case "commit":
                 validateNumArgs("commit", args, 2);
-                Repository.commitCommand(args[1]);
+
                 break;
             /** Handle `log` command */
             case "log":
