@@ -1,13 +1,15 @@
 package gitlet;
 
 import java.io.File;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 import static gitlet.Utils.*;
 
 /** Represents a gitlet repository.
- *  TODO: It's a good idea to give a description here of what else this Class
- *  TODO: does at a high level.
+ *  TODO: It's a good idea to give a description here of what else this Class does at a high level.
  *
  *  @author Xiaoli Li
  */
@@ -43,8 +45,7 @@ public class Repository {
         /** Make the initial commit and generate SHA1 of this commit. */
         Commit initialCommit = new Commit();
         String initialCommitID = sha1(serialize(initialCommit));
-        /** Save the commit to corresponding branch together with its ID. */
-        initialCommit.saveCommit(initialCommitID, branch);
+        initialCommit.saveCommit(initialCommitID);
 
         /** The master branch now points to initial commit. */
         POINTER_OF_BRANCH_DIR.mkdirs();
@@ -69,13 +70,12 @@ public class Repository {
         }
         byte[] fContents = readContents(f);
         String fSHA1 = sha1(fContents);
-        System.out.println("Should print SHA1 of the file content in below. ");
 
         /** Get info from the staging area. */
         File index = join(GITLET_DIR, "index");
-        TreeMap stagingArea = readObject(index, TreeMap.class);
+        TreeMap<String, String> stagingArea = readObject(index, TreeMap.class);
         /** Get info from the parent commit. */
-        TreeMap<String, String> parentFilesMapping = Commit.getParentCommit("master").getFilesMapping();
+        TreeMap<String, String> parentFilesMapping = Commit.getParentCommit().getFilesMapping();
 
         /**
          * If current working version of the file is the same as the version in parent commit,
@@ -85,9 +85,10 @@ public class Repository {
             if (stagingArea.remove(fileName) != null) {
                 writeObject(index, stagingArea);
             }
+            System.out.println("File should be removed from staging area if changed back to last commit.");
         }
-        /** Following codes run if current working version of the file is different thant parent commit. */
-        if (!stagingArea.containsKey(fileName) || fSHA1.equals(stagingArea.get(fileName))) {
+        /** Following codes run if current working version of the file is different from parent commit. */
+        if (!stagingArea.containsKey(fileName) || !fSHA1.equals(stagingArea.get(fileName))) {
             stagingArea.put(fileName, fSHA1);
             writeObject(index, stagingArea);
             File object = join(OBJECTS_DIR, fSHA1);
@@ -95,15 +96,26 @@ public class Repository {
         }
     }
 
+    public static void commitCommand(String message) {
+        File index = join(GITLET_DIR, "index");
+        TreeMap<String, String> stagingArea = readObject(index, TreeMap.class);
+        if (stagingArea.isEmpty()) {
+            message("No changes added to the commit.");
+            System.exit(0);
+        }
 
-    //public static void commitCommand(String message, Commit parent) {
-        // Read from my computer the head commit object and the staging area
-        // Clone the HEAD commit
-        // Modify its message and timestamp according to user input
-        // Use the staging area in order to modify the files tracked by the new commit
-        // Write back any new object made or any modified objects read earlier
+        File masterBranchPointer = join(POINTER_OF_BRANCH_DIR, "master");
+        String parentCommitID = readContentsAsString(masterBranchPointer);
+        TreeMap<String, String> fileMapping = Commit.getParentCommit().getFilesMapping();
+        fileMapping.putAll(stagingArea);
+        Commit newCommit = new Commit(message, parentCommitID, fileMapping);
+        String newCommitID = sha1(serialize(newCommit));
+        newCommit.saveCommit(newCommitID);
 
-    //}
+        writeContents(masterBranchPointer, newCommitID);
+        stagingArea.clear();
+        writeObject(index, stagingArea);
+    }
 
     public static void logCommand() {
         // TODO: print logs of all the commits

@@ -31,12 +31,11 @@ public class Commit implements Serializable {
     }
 
     /** Constructor with arguments. */
-    public Commit(String message, String parent, TreeMap<String, String> prevFilesMapping) {
+    public Commit(String message, String parent, TreeMap<String, String> filesMapping) {
         this.message = message;
         this.timestamp = (new Date()).toString();
         this.parent = parent;
-        /** Copy file-address mapping from parent's commit. */
-        this.filesMapping.putAll(prevFilesMapping);
+        this.filesMapping = (TreeMap<String, String>) filesMapping.clone();
     }
 
     public String getMessage() {
@@ -57,17 +56,17 @@ public class Commit implements Serializable {
 
     // TODO: save modified files into blobs
 
-    public void saveCommit(String commitID, String branch) {
-        File commit = join(COMMITS_OF_BRANCH_DIR, branch, commitID);
+    public void saveCommit(String commitID) {
+        File commit = join(COMMITS_OF_BRANCH_DIR, "master", commitID);
         writeObject(commit, this);
     }
 
     /** Helper method to read the parent commit info from computer. */
-    public static Commit getParentCommit(String branch) {
-        String parentCommitID = readContentsAsString(join(POINTER_OF_BRANCH_DIR, branch));
-        File parentCommit = join(COMMITS_OF_BRANCH_DIR, branch, parentCommitID);
+    public static Commit getParentCommit() {
+        String parentCommitID = readContentsAsString(join(POINTER_OF_BRANCH_DIR, "master"));
+        File parentCommit = join(COMMITS_OF_BRANCH_DIR, "master", parentCommitID);
         return readObject(parentCommit, Commit.class);
     }
 
-
 }
+

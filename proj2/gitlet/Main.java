@@ -1,6 +1,8 @@
 package gitlet;
 
 import java.io.IOException;
+import static gitlet.Utils.*;
+
 
 /** Driver class for Gitlet, a subset of the Git version-control system.
  *  @author Xiaoli Li
@@ -31,8 +33,12 @@ public class Main {
                 break;
             /** Handle `commit [message]` command */
             case "commit":
+                if (args.length == 1) {
+                    message("Please enter a commit message.");
+                    break;
+                }
                 validateNumArgs("commit", args, 2);
-
+                Repository.commitCommand(args[1]);
                 break;
             /** Handle `log` command */
             case "log":
