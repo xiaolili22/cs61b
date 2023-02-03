@@ -19,14 +19,14 @@ public class Commit implements Serializable {
 
     private final String message;
     private final String timestamp;
-    private final String parent;
+    private final String parentID;
     private TreeMap<String, String> filesMapping;
 
     /** No-argument constructor for the initial commit. */
     public Commit() {
         this.message = "initial commit";
         this.timestamp = (new Date(0)).toString();
-        this.parent = null;
+        this.parentID = null;
         this.filesMapping = new TreeMap<>();
     }
 
@@ -34,8 +34,9 @@ public class Commit implements Serializable {
     public Commit(String message, String parent, TreeMap<String, String> filesMapping) {
         this.message = message;
         this.timestamp = (new Date()).toString();
-        this.parent = parent;
-        this.filesMapping = (TreeMap<String, String>) filesMapping.clone();
+        this.parentID = parent;
+        this.filesMapping = new TreeMap<>();
+        this.filesMapping.putAll(filesMapping);
     }
 
     public String getMessage() {
@@ -46,15 +47,13 @@ public class Commit implements Serializable {
         return this.timestamp;
     }
 
-    public String getParent() {
-        return this.parent;
+    public String getParentID() {
+        return this.parentID;
     }
 
     public TreeMap<String, String> getFilesMapping() {
         return this.filesMapping;
     }
-
-    // TODO: save modified files into blobs
 
     public void saveCommit(String commitID) {
         File commit = join(COMMITS_OF_BRANCH_DIR, "master", commitID);
@@ -63,7 +62,7 @@ public class Commit implements Serializable {
 
     /** Helper method to read the parent commit info from computer. */
     public static Commit getParentCommit() {
-        String parentCommitID = readContentsAsString(join(POINTER_OF_BRANCH_DIR, "master"));
+        String parentCommitID = Repository.getCurrentBranchPointer();
         File parentCommit = join(COMMITS_OF_BRANCH_DIR, "master", parentCommitID);
         return readObject(parentCommit, Commit.class);
     }

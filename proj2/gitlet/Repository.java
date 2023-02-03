@@ -1,9 +1,7 @@
 package gitlet;
 
+
 import java.io.File;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
 
 import static gitlet.Utils.*;
@@ -49,31 +47,26 @@ public class Repository {
 
         /** The master branch now points to initial commit. */
         POINTER_OF_BRANCH_DIR.mkdirs();
-        File masterBranchPointer = join(POINTER_OF_BRANCH_DIR, branch);
-        writeContents(masterBranchPointer, initialCommitID);
+        Repository.setCurrentBranchPointer(initialCommitID);
 
         /** headPointer indicates the current branch. */
         // TODO: need to figure out how to store it
         File headPointer = join(GITLET_DIR, "HEAD");
-
-        /** Create a file used as staging area for later. */
-        File index = join(GITLET_DIR, "index");
-        TreeMap<String, String> stagingArea = new TreeMap<>();
-        writeObject(index, stagingArea);
     }
 
     public static void addCommand(String fileName) {
-        File f = join(CWD, fileName);
-        if (!f.exists()) {
+        File file = join(CWD, fileName);
+        if (!file.exists()) {
             message("File does not exist.");
             System.exit(0);
         }
-        byte[] fContents = readContents(f);
-        String fSHA1 = sha1(fContents);
+        /** Get SHA1 according to the file's content. */
+        byte[] fileContents = readContents(file);
+        String fileSHA1 = sha1(fileContents);
+        System.out.println("This is the SHA1 of this added file. " + fileSHA1);
 
         /** Get info from the staging area. */
-        File index = join(GITLET_DIR, "index");
-        TreeMap<String, String> stagingArea = readObject(index, TreeMap.class);
+        TreeMap<String, String> stagingArea = Repository.getStagingArea();
         /** Get info from the parent commit. */
         TreeMap<String, String> parentFilesMapping = Commit.getParentCommit().getFilesMapping();
 
@@ -81,44 +74,64 @@ public class Repository {
          * If current working version of the file is the same as the version in parent commit,
          * the remove method will remove the file from staging area if it exists.
          * */
-        if (fSHA1.equals(parentFilesMapping.get(fileName))){
-            if (stagingArea.remove(fileName) != null) {
-                writeObject(index, stagingArea);
-            }
-            System.out.println("File should be removed from staging area if changed back to last commit.");
+        if (fileSHA1.equals(parentFilesMapping.get(fileName))){
+            stagingArea.remove(fileName);
+            Repository.saveStagingArea(stagingArea);
         }
         /** Following codes run if current working version of the file is different from parent commit. */
-        if (!stagingArea.containsKey(fileName) || !fSHA1.equals(stagingArea.get(fileName))) {
-            stagingArea.put(fileName, fSHA1);
-            writeObject(index, stagingArea);
-            File object = join(OBJECTS_DIR, fSHA1);
-            writeContents(object, fContents);
+        else if (!stagingArea.containsKey(fileName) || !fileSHA1.equals(stagingArea.get(fileName))) {
+            stagingArea.put(fileName, fileSHA1);
+            Repository.saveStagingArea(stagingArea);
+            File object = join(OBJECTS_DIR, fileSHA1);
+            writeContents(object, fileContents);
         }
     }
 
     public static void commitCommand(String message) {
-        File index = join(GITLET_DIR, "index");
-        TreeMap<String, String> stagingArea = readObject(index, TreeMap.class);
+        TreeMap<String, String> stagingArea = Repository.getStagingArea();
         if (stagingArea.isEmpty()) {
             message("No changes added to the commit.");
             System.exit(0);
         }
 
-        File masterBranchPointer = join(POINTER_OF_BRANCH_DIR, "master");
-        String parentCommitID = readContentsAsString(masterBranchPointer);
+        String parentCommitID = Repository.getCurrentBranchPointer();
         TreeMap<String, String> fileMapping = Commit.getParentCommit().getFilesMapping();
         fileMapping.putAll(stagingArea);
+
         Commit newCommit = new Commit(message, parentCommitID, fileMapping);
         String newCommitID = sha1(serialize(newCommit));
         newCommit.saveCommit(newCommitID);
 
-        writeContents(masterBranchPointer, newCommitID);
+        Repository.setCurrentBranchPointer(newCommitID);
         stagingArea.clear();
-        writeObject(index, stagingArea);
+        Repository.saveStagingArea(stagingArea);
     }
 
     public static void logCommand() {
         // TODO: print logs of all the commits
+    }
+
+    public static String getCurrentBranchPointer() {
+        File currentBranchPointer = join(POINTER_OF_BRANCH_DIR, "master");
+        return readContentsAsString(currentBranchPointer);
+    }
+
+    public static void setCurrentBranchPointer(String commitID) {
+        File currentBranchPointer = join(POINTER_OF_BRANCH_DIR, "master");
+        writeContents(currentBranchPointer, commitID);
+    }
+
+    public static TreeMap<String, String> getStagingArea() {
+        File index = join(GITLET_DIR, "index");
+        if (!index.exists()) {
+            return new TreeMap<>();
+        }
+        return readObject(index, TreeMap.class);
+    }
+
+    public static void saveStagingArea(TreeMap<String, String> stagingArea) {
+        File index = join(GITLET_DIR, "index");
+        writeObject(index, stagingArea);
     }
 
 }
