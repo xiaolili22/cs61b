@@ -19,7 +19,7 @@ public class Repository {
     /** Store versioned files and history commit, using SHA1 as name. */
     public static final File OBJECTS_DIR = join(GITLET_DIR, "objects");
     /** Store pointer (the latest commit) of each branch. File name is branch name. */
-    public static final File POINTER_OF_BRANCH_DIR = join(GITLET_DIR, "refs", "heads");
+    public static final File BRANCH_POINTER_DIR = join(GITLET_DIR, "refs", "heads");
 
     public static void initCommand() {
         if (GITLET_DIR.exists()) {
@@ -29,28 +29,24 @@ public class Repository {
         GITLET_DIR.mkdir();
         OBJECTS_DIR.mkdir();
 
-        /** Initialize the branch as master branch. */
-        String branch = "master";
-
         /** Make the initial commit and generate SHA1 of this commit. */
         Commit initialCommit = new Commit();
         String initialCommitID = sha1(serialize(initialCommit));
         initialCommit.saveCommit(initialCommitID);
 
-        /** The master branch now points to initial commit. */
-        POINTER_OF_BRANCH_DIR.mkdirs();
-        Repository.setCurrentBranchPointer(initialCommitID);
+        /** Create master branch, which points to the initial commit. */
+        BRANCH_POINTER_DIR.mkdirs();
+        File masterBranchPointer = join(BRANCH_POINTER_DIR, "master");
+        writeContents(masterBranchPointer, initialCommitID);
 
-        /** headPointer indicates the current branch. */
-        // TODO: need to figure out how to store it
-        File headPointer = join(GITLET_DIR, "HEAD");
+        /** Let HEAD point to current branch (master branch for now). */
+        Repository.setHEAD("master");
     }
 
     public static void addCommand(String fileName) {
         /** Get SHA1 according to the file's content. */
         byte[] fileContent = Repository.readFileFromDisc(fileName);
         String fileSHA1 = sha1(fileContent);
-        System.out.println("This is the SHA1 of this added file. " + fileSHA1);
 
         /** Get info from the staging area and parent commit. */
         TreeMap<String, String> stagingArea = Repository.getStagingArea();
@@ -127,7 +123,8 @@ public class Repository {
                     + " " + "\n";
 
             commitsHistory = commitsHistory + commitInfo;
-            commit = Commit.getCommit(commit.getParentID());
+            parentID = commit.getParentID();
+            commit = Commit.getCommit(parentID);
         }
         System.out.print(commitsHistory);
     }
@@ -153,14 +150,28 @@ public class Repository {
         writeContents(join(OBJECTS_DIR, fileSHA1), fileContent);
     }
 
+    public static void setHEAD(String branch) {
+        File head = join(GITLET_DIR, "HEAD");
+        String info = "ref: refs/heads/" + branch;
+        writeContents(head, info);
+    }
+
+    public static String getHEAD() {
+        File head = join(GITLET_DIR, "HEAD");
+        String[] info = readContentsAsString(head).split("/");
+        return info[info.length - 1];
+    }
+
 
     public static String getCurrentBranchPointer() {
-        File currentBranchPointer = join(POINTER_OF_BRANCH_DIR, "master");
+        String branch = getHEAD();
+        File currentBranchPointer = join(BRANCH_POINTER_DIR, branch);
         return readContentsAsString(currentBranchPointer);
     }
 
     public static void setCurrentBranchPointer(String commitID) {
-        File currentBranchPointer = join(POINTER_OF_BRANCH_DIR, "master");
+        String branch = getHEAD();
+        File currentBranchPointer = join(BRANCH_POINTER_DIR, branch);
         writeContents(currentBranchPointer, commitID);
     }
 

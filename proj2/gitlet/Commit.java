@@ -24,7 +24,7 @@ public class Commit implements Serializable {
     /** No-argument constructor for the initial commit. */
     public Commit() {
         this.message = "initial commit";
-        this.timestamp = (new Date(0)).toString();
+        this.timestamp = String.format("%ta %<tb %<te %<tT %<tY %<tz", new Date(0));
         this.parentID = null;
         this.filesMapping = new TreeMap<>();
     }
@@ -32,7 +32,7 @@ public class Commit implements Serializable {
     /** Constructor with arguments. */
     public Commit(String message, String parentID, TreeMap<String, String> filesMapping) {
         this.message = message;
-        this.timestamp = (new Date()).toString();
+        this.timestamp = String.format("%ta %<tb %<te %<tT %<tY %<tz", new Date());
         this.parentID = parentID;
         this.filesMapping = new TreeMap<>();
         this.filesMapping.putAll(filesMapping);
