@@ -5,8 +5,7 @@ import java.io.Serializable;
 import java.util.Date;
 import java.util.TreeMap;
 
-import static gitlet.Repository.COMMITS_OF_BRANCH_DIR;
-import static gitlet.Repository.POINTER_OF_BRANCH_DIR;
+import static gitlet.Repository.*;
 import static gitlet.Utils.*;
 
 /** Represents a gitlet commit object.
@@ -31,10 +30,10 @@ public class Commit implements Serializable {
     }
 
     /** Constructor with arguments. */
-    public Commit(String message, String parent, TreeMap<String, String> filesMapping) {
+    public Commit(String message, String parentID, TreeMap<String, String> filesMapping) {
         this.message = message;
         this.timestamp = (new Date()).toString();
-        this.parentID = parent;
+        this.parentID = parentID;
         this.filesMapping = new TreeMap<>();
         this.filesMapping.putAll(filesMapping);
     }
@@ -56,16 +55,26 @@ public class Commit implements Serializable {
     }
 
     public void saveCommit(String commitID) {
-        File commit = join(COMMITS_OF_BRANCH_DIR, "master", commitID);
+        File commit = join(OBJECTS_DIR, commitID);
         writeObject(commit, this);
     }
 
-    /** Helper method to read the parent commit info from computer. */
-    public static Commit getParentCommit() {
-        String parentCommitID = Repository.getCurrentBranchPointer();
-        File parentCommit = join(COMMITS_OF_BRANCH_DIR, "master", parentCommitID);
-        return readObject(parentCommit, Commit.class);
+    /** Helper methods to read commit info from disc. */
+    public static Commit getCurrentCommit() {
+        String parentID = Repository.getCurrentBranchPointer();
+        return getCommit(parentID);
     }
-
+    public static Commit getCommit(String commitID) {
+        if (commitID == null) {
+            return null;
+        }
+        File commit = join(OBJECTS_DIR, commitID);
+        if (!commit.exists()) {
+            message("No commit with that id exists.");
+            System.exit(0);
+        }
+        return readObject(commit, Commit.class);
+    }
 }
+
 

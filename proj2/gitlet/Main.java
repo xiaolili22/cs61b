@@ -1,6 +1,9 @@
 package gitlet;
 
+import java.io.File;
 import java.io.IOException;
+
+import static gitlet.Repository.CWD;
 import static gitlet.Utils.*;
 
 
@@ -13,7 +16,7 @@ public class Main {
      *  <COMMAND> <OPERAND1> <OPERAND2> ... 
      */
     public static void main(String[] args) throws IOException {
-        // If args is empty
+        /** If args is empty */
         if (args.length == 0) {
             Utils.message("Please enter a command.");
             System.exit(0);
@@ -45,8 +48,22 @@ public class Main {
                 validateNumArgs("log", args, 1);
                 Repository.logCommand();
                 break;
-            /** Handle `checkout -- [file name]` */
             case "checkout":
+                /**
+                 * Handle checkout -- [file name]
+                 * Handle checkout [commit id] -- [file name]
+                 * Handle checkout [branch name]
+                 * */
+                if (args.length == 3) {
+                    Repository.checkoutFile(args[2]);
+                } else if (args.length == 4) {
+                    Repository.checkoutFile(args[1], args[3]);
+                } else if (args.length == 2) {
+                    Repository.checkoutBranch(args[1]);
+                } else {
+                    message("Incorrect operands.");
+                    System.exit(0);
+                }
                 break;
             default:
                 Utils.message("No command with that name exists.");
@@ -65,7 +82,7 @@ public class Main {
      * */
     public static void validateNumArgs(String cmd, String[] args, int n) {
         if (args.length != n) {
-            Utils.message("Incorrect operands.");
+            message("Incorrect operands.");
             System.exit(0);
         }
     }

@@ -16,16 +16,10 @@ public class Repository {
     public static final File CWD = new File(System.getProperty("user.dir"));
     /** The .gitlet directory. */
     public static final File GITLET_DIR = join(CWD, ".gitlet");
-    /** Store versioned files of my working directory. File name is its SHA1 ID. */
+    /** Store versioned files and history commit, using SHA1 as name. */
     public static final File OBJECTS_DIR = join(GITLET_DIR, "objects");
     /** Store pointer (the latest commit) of each branch. File name is branch name. */
     public static final File POINTER_OF_BRANCH_DIR = join(GITLET_DIR, "refs", "heads");
-    /**
-     * Store history commits of each branch.
-     * Subfolder name is branch name.
-     * Inside the subfolder, each commit is saved as a single object with SHA1 ID as its name.
-     * */
-    public static final File COMMITS_OF_BRANCH_DIR = join(GITLET_DIR, "logs", "refs", "heads");
 
     public static void initCommand() {
         if (GITLET_DIR.exists()) {
@@ -38,8 +32,6 @@ public class Repository {
         /** Initialize the branch as master branch. */
         String branch = "master";
 
-        File commitsDir = join(COMMITS_OF_BRANCH_DIR, branch);
-        commitsDir.mkdirs();
         /** Make the initial commit and generate SHA1 of this commit. */
         Commit initialCommit = new Commit();
         String initialCommitID = sha1(serialize(initialCommit));
@@ -55,35 +47,29 @@ public class Repository {
     }
 
     public static void addCommand(String fileName) {
-        File file = join(CWD, fileName);
-        if (!file.exists()) {
-            message("File does not exist.");
-            System.exit(0);
-        }
         /** Get SHA1 according to the file's content. */
-        byte[] fileContents = readContents(file);
-        String fileSHA1 = sha1(fileContents);
+        byte[] fileContent = Repository.readFileFromDisc(fileName);
+        String fileSHA1 = sha1(fileContent);
         System.out.println("This is the SHA1 of this added file. " + fileSHA1);
 
-        /** Get info from the staging area. */
+        /** Get info from the staging area and parent commit. */
         TreeMap<String, String> stagingArea = Repository.getStagingArea();
-        /** Get info from the parent commit. */
-        TreeMap<String, String> parentFilesMapping = Commit.getParentCommit().getFilesMapping();
+        TreeMap<String, String> parentFilesMapping = Commit.getCurrentCommit().getFilesMapping();
 
         /**
          * If current working version of the file is the same as the version in parent commit,
          * the remove method will remove the file from staging area if it exists.
          * */
         if (fileSHA1.equals(parentFilesMapping.get(fileName))){
-            stagingArea.remove(fileName);
-            Repository.saveStagingArea(stagingArea);
+            if (stagingArea.remove(fileName) != null) {
+                Repository.saveStagingArea(stagingArea);
+            }
         }
         /** Following codes run if current working version of the file is different from parent commit. */
         else if (!stagingArea.containsKey(fileName) || !fileSHA1.equals(stagingArea.get(fileName))) {
             stagingArea.put(fileName, fileSHA1);
             Repository.saveStagingArea(stagingArea);
-            File object = join(OBJECTS_DIR, fileSHA1);
-            writeContents(object, fileContents);
+            Repository.writeFileToBlob(fileContent, fileSHA1);
         }
     }
 
@@ -94,11 +80,12 @@ public class Repository {
             System.exit(0);
         }
 
-        String parentCommitID = Repository.getCurrentBranchPointer();
-        TreeMap<String, String> fileMapping = Commit.getParentCommit().getFilesMapping();
-        fileMapping.putAll(stagingArea);
+        String parentID = Repository.getCurrentBranchPointer();
 
-        Commit newCommit = new Commit(message, parentCommitID, fileMapping);
+        TreeMap<String, String> filesMapping = Commit.getCurrentCommit().getFilesMapping();
+        filesMapping.putAll(stagingArea);
+
+        Commit newCommit = new Commit(message, parentID, filesMapping);
         String newCommitID = sha1(serialize(newCommit));
         newCommit.saveCommit(newCommitID);
 
@@ -107,9 +94,65 @@ public class Repository {
         Repository.saveStagingArea(stagingArea);
     }
 
-    public static void logCommand() {
-        // TODO: print logs of all the commits
+    public static void checkoutFile(String fileName) {
+        String parentID = Repository.getCurrentBranchPointer();
+        checkoutFile(parentID, fileName);
     }
+
+    public static void checkoutFile(String commitID, String fileName) {
+        Commit commit = Commit.getCommit(commitID);
+        TreeMap<String, String> filesMapping = commit.getFilesMapping();
+        if (!filesMapping.containsKey(fileName)) {
+            message("File does not exist in that commit.");
+            System.exit(0);
+        }
+        byte[] fileContent = Repository.readFileFromBlob(filesMapping.get(fileName));
+        Repository.writeFileToDisk(fileContent, fileName);
+    }
+
+    public static void checkoutBranch(String branchName) {
+        // TODO
+    }
+
+    public static void logCommand() {
+        Commit commit = Commit.getCurrentCommit();
+        String commitInfo;
+        String commitsHistory = "";
+        String parentID = Repository.getCurrentBranchPointer();
+        while (commit != null) {
+            commitInfo = "===" + "\n"
+                    + "commit " + parentID + "\n"
+                    + "Date: " + commit.getTimestamp() + "\n"
+                    + commit.getMessage() + "\n"
+                    + " " + "\n";
+
+            commitsHistory = commitsHistory + commitInfo;
+            commit = Commit.getCommit(commit.getParentID());
+        }
+        System.out.print(commitsHistory);
+    }
+
+    public static byte[] readFileFromDisc(String fileName) {
+        File file = join(CWD, fileName);
+        if (!file.exists()) {
+            message("File does not exist.");
+            System.exit(0);
+        }
+        return readContents(file);
+    }
+
+    public static void writeFileToDisk(byte[] fileContent, String fileName) {
+        writeContents(join(CWD, fileName), fileContent);
+    }
+
+    public static byte[] readFileFromBlob(String fileSHA1) {
+        return readContents(join(OBJECTS_DIR, fileSHA1));
+    }
+
+    public static void writeFileToBlob(byte[] fileContent, String fileSHA1) {
+        writeContents(join(OBJECTS_DIR, fileSHA1), fileContent);
+    }
+
 
     public static String getCurrentBranchPointer() {
         File currentBranchPointer = join(POINTER_OF_BRANCH_DIR, "master");
