@@ -2,6 +2,7 @@ package gitlet;
 
 
 import java.io.File;
+import java.util.Map;
 import java.util.TreeMap;
 
 import static gitlet.Utils.*;
@@ -20,6 +21,7 @@ public class Repository {
     public static final File OBJECTS_DIR = join(GITLET_DIR, "objects");
     /** Store pointer (the latest commit) of each branch. File name is branch name. */
     public static final File BRANCH_POINTER_DIR = join(GITLET_DIR, "refs", "heads");
+    public static final File HISTORY_COMMITS_DIR = join(GITLET_DIR, "logs", "refs", "heads");
 
     public static void initCommand() {
         if (GITLET_DIR.exists()) {
@@ -28,6 +30,7 @@ public class Repository {
         }
         GITLET_DIR.mkdir();
         OBJECTS_DIR.mkdir();
+        HISTORY_COMMITS_DIR.mkdirs();
 
         /** Make the initial commit and generate SHA1 of this commit. */
         Commit initialCommit = new Commit();
@@ -41,6 +44,9 @@ public class Repository {
 
         /** Let HEAD point to current branch (master branch for now). */
         Repository.setHEAD("master");
+
+        /** Also add initialCommit to commits history of current branch (which is master branch now). */
+        Commit.addToCommitsHistory(initialCommit, initialCommitID);
     }
 
     public static void addCommand(String fileName) {
@@ -48,7 +54,7 @@ public class Repository {
         byte[] fileContent = Repository.readFileFromDisc(fileName);
         String fileSHA1 = sha1(fileContent);
 
-        /** Get info from the staging area and parent commit. */
+        /** Get mapping info from the staging area and parent commit. */
         TreeMap<String, String> stagingArea = Repository.getStagingArea();
         TreeMap<String, String> parentFilesMapping = Commit.getCurrentCommit().getFilesMapping();
 
@@ -79,13 +85,28 @@ public class Repository {
         String parentID = Repository.getCurrentBranchPointer();
 
         TreeMap<String, String> filesMapping = Commit.getCurrentCommit().getFilesMapping();
-        filesMapping.putAll(stagingArea);
+        /**
+         * Iterate through stagingArea,
+         * if the value for a key is "remove", then remove it from newCommit,
+         * otherwise replace the value with the one in stagingArea.
+         * */
+        for(Map.Entry<String, String> entry : stagingArea.entrySet()) {
+            String key = entry.getKey();
+            String value = entry.getValue();
+            if (value.equals("remove")) {
+                filesMapping.remove(key);
+            } else {
+                filesMapping.put(key, value);
+            }
+        }
 
         Commit newCommit = new Commit(message, parentID, filesMapping);
         String newCommitID = sha1(serialize(newCommit));
         newCommit.saveCommit(newCommitID);
 
         Repository.setCurrentBranchPointer(newCommitID);
+        Commit.addToCommitsHistory(newCommit, newCommitID);
+
         stagingArea.clear();
         Repository.saveStagingArea(stagingArea);
     }
@@ -106,25 +127,47 @@ public class Repository {
         Repository.writeFileToDisk(fileContent, fileName);
     }
 
-    public static void checkoutBranch(String branchName) {
+    public static void checkoutBranch(String branch) {
         // TODO
+    }
+
+    public static void removeCommand(String fileName) {
+        TreeMap<String, String> stagingArea = Repository.getStagingArea();
+        TreeMap<String, String> filesMapping = Commit.getCurrentCommit().getFilesMapping();
+
+        if (!stagingArea.containsKey(fileName) && !filesMapping.containsKey(fileName)) {
+            message("No reason to remove the file.");
+            System.exit(0);
+        }
+        /** Unstage the files if it's currently staged for addition. */
+        if (stagingArea.containsKey(fileName)) {
+            stagingArea.remove(fileName);
+        }
+        /** If tracked in current commit, stage it for removal and remove file from the WD. */
+        if (filesMapping.containsKey(fileName)) {
+            stagingArea.put(fileName, "remove");
+            File file = join(CWD, fileName);
+            restrictedDelete(file);
+        }
+
+        Repository.saveStagingArea(stagingArea);
     }
 
     public static void logCommand() {
         Commit commit = Commit.getCurrentCommit();
         String commitInfo;
-        String commitsHistory = "";
-        String parentID = Repository.getCurrentBranchPointer();
+        StringBuilder commitsHistory = new StringBuilder();
+        String commitID = Repository.getCurrentBranchPointer();
         while (commit != null) {
             commitInfo = "===" + "\n"
-                    + "commit " + parentID + "\n"
+                    + "commit " + commitID + "\n"
                     + "Date: " + commit.getTimestamp() + "\n"
                     + commit.getMessage() + "\n"
                     + " " + "\n";
 
-            commitsHistory = commitsHistory + commitInfo;
-            parentID = commit.getParentID();
-            commit = Commit.getCommit(parentID);
+            commitsHistory.append(commitInfo);
+            commitID = commit.getParentID();
+            commit = Commit.getCommit(commitID);
         }
         System.out.print(commitsHistory);
     }
@@ -187,6 +230,17 @@ public class Repository {
         File index = join(GITLET_DIR, "index");
         writeObject(index, stagingArea);
     }
+
+    public static boolean isUntracked(File fileName,
+                                      TreeMap<String, String> stagingArea,
+                                      TreeMap<String, String> filesMapping) {
+        // TODO: The final category (“Untracked Files”) is for files present in the working directory,
+        //  but neither staged for addition nor tracked.
+        //  This includes files that have been staged for removal, but then re-created.
+
+        return false;
+    }
+
 
 }
 

@@ -2,6 +2,8 @@ package gitlet;
 
 import java.io.File;
 import java.io.Serializable;
+import java.sql.Array;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.TreeMap;
 
@@ -61,8 +63,8 @@ public class Commit implements Serializable {
 
     /** Helper methods to read commit info from disc. */
     public static Commit getCurrentCommit() {
-        String parentID = Repository.getCurrentBranchPointer();
-        return getCommit(parentID);
+        String commitID = Repository.getCurrentBranchPointer();
+        return getCommit(commitID);
     }
     public static Commit getCommit(String commitID) {
         if (commitID == null) {
@@ -74,6 +76,29 @@ public class Commit implements Serializable {
             System.exit(0);
         }
         return readObject(commit, Commit.class);
+    }
+
+    /** Read commits history for the current branch. */
+    public static ArrayList<String[]> readCommitsHistory() {
+        String branch = Repository.getHEAD();
+        File currentBranchHistory = join(HISTORY_COMMITS_DIR, branch);
+        if (!currentBranchHistory.exists()) {
+            return new ArrayList<>();
+        }
+        return readObject(currentBranchHistory, ArrayList.class);
+    }
+
+    public static void saveCommitsHistory(ArrayList<String[]> commitsHistory) {
+        String branch = Repository.getHEAD();
+        File currentBranchHistory = join(HISTORY_COMMITS_DIR, branch);
+        writeObject(currentBranchHistory, commitsHistory);
+    }
+
+    public static void addToCommitsHistory(Commit commit, String commitID) {
+        String[] commitInfo = new String[]{commit.getParentID(), commitID, commit.getTimestamp(), commit.getMessage()};
+        ArrayList<String[]> commitsHistory = Commit.readCommitsHistory();
+        commitsHistory.add(commitInfo);
+        saveCommitsHistory(commitsHistory);
     }
 }
 

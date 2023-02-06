@@ -1,9 +1,6 @@
 package gitlet;
 
-import java.io.File;
-import java.io.IOException;
-
-import static gitlet.Repository.CWD;
+import static gitlet.Repository.GITLET_DIR;
 import static gitlet.Utils.*;
 
 
@@ -31,11 +28,13 @@ public class Main {
                 break;
             /** Handle `add [filename]` command */
             case "add":
+                validateInit();
                 validateNumArgs("add", args, 2);
                 Repository.addCommand(args[1]);
                 break;
             /** Handle `commit [message]` command */
             case "commit":
+                validateInit();
                 if (args.length == 1) {
                     message("Please enter a commit message.");
                     break;
@@ -43,12 +42,20 @@ public class Main {
                 validateNumArgs("commit", args, 2);
                 Repository.commitCommand(args[1]);
                 break;
+            /** Handle `remove` command */
+            case "rm":
+                validateInit();
+                validateNumArgs("rm", args, 2);
+                Repository.removeCommand(args[1]);
+                break;
             /** Handle `log` command */
             case "log":
+                validateInit();
                 validateNumArgs("log", args, 1);
                 Repository.logCommand();
                 break;
             case "checkout":
+                validateInit();
                 /**
                  * Handle checkout -- [file name]
                  * Handle checkout [commit id] -- [file name]
@@ -83,6 +90,13 @@ public class Main {
     public static void validateNumArgs(String cmd, String[] args, int n) {
         if (args.length != n) {
             message("Incorrect operands.");
+            System.exit(0);
+        }
+    }
+
+    public static void validateInit() {
+        if (!GITLET_DIR.exists()) {
+            message("Not in an initialized Gitlet directory.");
             System.exit(0);
         }
     }
