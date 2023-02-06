@@ -72,6 +72,16 @@ public class Main {
                     System.exit(0);
                 }
                 break;
+            case "branch":
+                validateInit();
+                validateNumArgs("branch", args, 2);
+                Repository.branchCommand(args[1]);
+                break;
+            case "rm-branch":
+                validateInit();
+                validateNumArgs("rm-branch", args, 2);
+                Repository.removeBranchCommand(args[1]);
+                break;
             default:
                 Utils.message("No command with that name exists.");
                 System.exit(0);

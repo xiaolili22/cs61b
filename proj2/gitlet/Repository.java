@@ -2,6 +2,7 @@ package gitlet;
 
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -128,7 +129,61 @@ public class Repository {
     }
 
     public static void checkoutBranch(String branch) {
-        // TODO
+        if (Repository.getHEAD().equals(branch)) {
+            message("No need to checkout the current branch.");
+            System.exit(0);
+        }
+
+        String branchPointer = Repository.getBranchPointer(branch);
+        TreeMap<String, String> branchFilesMapping = Commit.getCommit(branchPointer).getFilesMapping();
+        TreeMap<String, String> currentFilesMapping = Commit.getCurrentCommit().getFilesMapping();
+        /** Take all files in the head of the given branch, put them into WD. */
+        for (Map.Entry<String, String> entry : branchFilesMapping.entrySet()) {
+            String fileName = entry.getKey();
+            String branchFileSHA1 = entry.getValue();
+            /** If file is untracked in the current branch and would be overwritten by the checkout. */
+            if (!currentFilesMapping.containsKey(fileName)
+                    && (join(CWD, fileName)).exists()
+                    && !sha1(Repository.readFileFromDisc(fileName)).equals(branchFileSHA1)) {
+                message("There is an untracked file in the way; delete it, or add and commit it first.");
+                System.exit(0);
+            }
+            byte[] fileContent = Repository.readFileFromBlob(branchFileSHA1);
+            Repository.writeFileToDisk(fileContent, fileName);
+        }
+    }
+
+    public static void branchCommand(String branch) {
+        File branchPointer = join(BRANCH_POINTER_DIR, branch);
+        if (branchPointer.exists()) {
+            message("A branch with that name already exists.");
+            System.exit(0);
+        }
+        /** Get the current branch pointer and write to new branch's pointer file. */
+        String headPointer = Repository.getCurrentBranchPointer();
+        writeContents(branchPointer, headPointer);
+        /** copy commits history to this branch's file under logs directory. */
+        ArrayList<String[]> inheritedHistory = Commit.readCommitsHistory();
+        File branchHistory = join(HISTORY_COMMITS_DIR, branch);
+        writeObject(branchHistory, inheritedHistory);
+    }
+
+    public static void removeBranchCommand(String branch) {
+        String currentBranch = Repository.getHEAD();
+        if (branch.equals(currentBranch)) {
+            message("Cannot remove the current branch.");
+            System.exit(0);
+        }
+
+        File branchPointer = join(BRANCH_POINTER_DIR, branch);
+        if (!branchPointer.exists()) {
+            message("A branch with that name does not exist.");
+            System.exit(0);
+        }
+        branchPointer.delete();
+
+        File branchHistory = join(HISTORY_COMMITS_DIR, branch);
+        branchHistory.delete();
     }
 
     public static void removeCommand(String fileName) {
@@ -198,18 +253,25 @@ public class Repository {
         String info = "ref: refs/heads/" + branch;
         writeContents(head, info);
     }
-
+    /** Return current active branch's name. */
     public static String getHEAD() {
         File head = join(GITLET_DIR, "HEAD");
         String[] info = readContentsAsString(head).split("/");
         return info[info.length - 1];
     }
 
-
+    /** Return current active branch's latest commit ID. */
     public static String getCurrentBranchPointer() {
         String branch = getHEAD();
-        File currentBranchPointer = join(BRANCH_POINTER_DIR, branch);
-        return readContentsAsString(currentBranchPointer);
+        return getBranchPointer(branch);
+    }
+    public static String getBranchPointer(String branch) {
+        File branchPointer = join(BRANCH_POINTER_DIR, branch);
+        if (!branchPointer.exists()) {
+            message("No such branch exists.");
+            System.exit(0);
+        }
+        return readContentsAsString(branchPointer);
     }
 
     public static void setCurrentBranchPointer(String commitID) {
