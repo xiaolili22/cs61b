@@ -54,6 +54,11 @@ public class Main {
                 validateNumArgs("log", args, 1);
                 Repository.logCommand();
                 break;
+            case "status":
+                validateInit();
+                validateNumArgs("status", args, 1);
+                Repository.statusCommand();
+                break;
             case "checkout":
                 validateInit();
                 /**

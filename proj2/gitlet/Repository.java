@@ -2,9 +2,8 @@ package gitlet;
 
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.TreeMap;
+import java.lang.reflect.Array;
+import java.util.*;
 
 import static gitlet.Utils.*;
 
@@ -160,7 +159,43 @@ public class Repository {
     }
 
     public static void statusCommand() {
-        // TODO
+        List<String>  branchList = plainFilenamesIn(BRANCH_POINTER_DIR);
+        StringBuilder status = new StringBuilder();
+        String currentBranch = Repository.getHEAD();
+        status.append("=== Branches ===" + "\n");
+        for (String str : branchList) {
+            if (str.equals(currentBranch)) {
+                str = "*" + str;
+            }
+            status.append(str + "\n");
+        }
+
+        status.append("\n" + "=== Staged Files ===" + "\n");
+        TreeMap<String, String> stagingArea = Repository.getStagingArea();
+        ArrayList<String> stageForAdd = new ArrayList<>();
+        ArrayList<String> stageForRemove = new ArrayList<>();
+        for (Map.Entry<String, String> entry : stagingArea.entrySet()) {
+            if (!entry.getValue().equals("remove")) {
+                stageForAdd.add(entry.getKey());
+            } else {
+                stageForRemove.add(entry.getKey());
+            }
+        }
+        Collections.sort(stageForAdd);
+        Collections.sort(stageForRemove);
+
+        for (String str : stageForAdd) {
+            status.append(str + "\n");
+        }
+
+        status.append("\n" + "=== Removed Files ===" + "\n");
+        for (String str : stageForRemove) {
+            status.append(str + "\n");
+        }
+
+        status.append("\n" + "=== Modifications Not Staged For Commit ===" + "\n");
+        status.append("\n" + "=== Untracked Files ===" + "\n");
+        System.out.println(status);
     }
 
     public static void checkoutFile(String fileName) {
