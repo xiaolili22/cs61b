@@ -159,9 +159,21 @@ public class Repository {
     }
 
     public static void statusCommand() {
-        List<String>  branchList = plainFilenamesIn(BRANCH_POINTER_DIR);
+        List<String> branchList = plainFilenamesIn(BRANCH_POINTER_DIR);
+        List<String> cwdFiles = plainFilenamesIn(CWD);
+
         StringBuilder status = new StringBuilder();
+
         String currentBranch = Repository.getHEAD();
+        TreeMap<String, String> stagingArea = Repository.getStagingArea();
+        TreeMap<String, String> filesMapping = Commit.getCurrentCommit().getFilesMapping();
+
+        ArrayList<String> stageForAdd = new ArrayList<>();
+        ArrayList<String> stageForRemove = new ArrayList<>();
+        ArrayList<String> modifiedNotStaged = new ArrayList<>();
+        ArrayList<String> deletedNotStaged = new ArrayList<>();
+        ArrayList<String> untracked = new ArrayList<>();
+
         status.append("=== Branches ===" + "\n");
         for (String str : branchList) {
             if (str.equals(currentBranch)) {
@@ -170,13 +182,13 @@ public class Repository {
             status.append(str + "\n");
         }
 
-        status.append("\n" + "=== Staged Files ===" + "\n");
-        TreeMap<String, String> stagingArea = Repository.getStagingArea();
-        ArrayList<String> stageForAdd = new ArrayList<>();
-        ArrayList<String> stageForRemove = new ArrayList<>();
         for (Map.Entry<String, String> entry : stagingArea.entrySet()) {
             if (!entry.getValue().equals("remove")) {
                 stageForAdd.add(entry.getKey());
+                /** Staged for addition, but deleted in the working directory. */
+                if (!join(CWD, entry.getKey()).exists()) {
+                    deletedNotStaged.add(entry.getKey());
+                }
             } else {
                 stageForRemove.add(entry.getKey());
             }
@@ -184,6 +196,7 @@ public class Repository {
         Collections.sort(stageForAdd);
         Collections.sort(stageForRemove);
 
+        status.append("\n" + "=== Staged Files ===" + "\n");
         for (String str : stageForAdd) {
             status.append(str + "\n");
         }
@@ -193,8 +206,52 @@ public class Repository {
             status.append(str + "\n");
         }
 
+        for (String fileName : cwdFiles) {
+            /**
+             * Tracked in the current commit, changed in the working directory, but not staged; or
+             * Staged for addition, but with different contents than in the working directory; or
+             * The final category (“Untracked Files”) is for files present in the working directory
+             * but neither staged for addition nor tracked.
+             */
+
+            byte[] fileContent = Repository.readFileFromDisc(fileName);
+            if (filesMapping.containsKey(fileName)
+                    && !sha1(fileContent).equals(filesMapping.get(fileName))
+                    && !stagingArea.containsKey(fileName)) {
+                modifiedNotStaged.add(fileName);
+            } else if (isStagedToAdd(fileName, stagingArea)
+                    && !sha1(fileContent).equals(stagingArea.get(fileName))) {
+                modifiedNotStaged.add(fileName);
+            } else if (!filesMapping.containsKey(fileName)
+                    && !isStagedToAdd(fileName, stagingArea)) {
+                untracked.add(fileName);
+            }
+        }
+        /** Not staged for removal, but tracked in the current commit and deleted from the wd. */
+        for (Map.Entry<String, String> entry : filesMapping.entrySet()) {
+            if (!join(CWD, entry.getKey()).exists()
+                    && !isStagedToRemove(entry.getKey(), stagingArea)) {
+                if (!deletedNotStaged.contains(entry.getKey())) {
+                    deletedNotStaged.add(entry.getKey());
+                }
+            }
+        }
+
+        Collections.sort(modifiedNotStaged);
+        Collections.sort(deletedNotStaged);
+        Collections.sort(untracked);
+
         status.append("\n" + "=== Modifications Not Staged For Commit ===" + "\n");
+        for (String str : deletedNotStaged) {
+            status.append(str + " (deleted)" + "\n" );
+        }
+        for (String str : modifiedNotStaged) {
+            status.append(str + " (modified)" + "\n");
+        }
         status.append("\n" + "=== Untracked Files ===" + "\n");
+        for (String str : untracked) {
+            status.append(str + "\n");
+        }
         System.out.println(status);
     }
 
@@ -392,14 +449,12 @@ public class Repository {
         saveStagingArea(stagingArea);
     }
 
-    public static boolean isUntracked(File fileName,
-                                      TreeMap<String, String> stagingArea,
-                                      TreeMap<String, String> filesMapping) {
-        // TODO: The final category (“Untracked Files”) is for files present in the working directory,
-        //  but neither staged for addition nor tracked.
-        //  This includes files that have been staged for removal, but then re-created.
+    private static boolean isStagedToAdd(String fileName, TreeMap<String, String> stagingArea) {
+        return stagingArea.containsKey(fileName) && !stagingArea.get(fileName).equals("remove");
+    }
 
-        return false;
+    private static boolean isStagedToRemove(String fileName, TreeMap<String, String> stagingArea) {
+        return stagingArea.containsKey(fileName) && stagingArea.get(fileName).equals("remove");
     }
 
 }
