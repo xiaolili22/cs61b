@@ -68,13 +68,13 @@ public class Main {
                  * */
                 if (args.length == 3) {
                     if (!args[1].equals("--")) {
-                        message("Incorrect operands");
+                        message("Incorrect operands.");
                         System.exit(0);
                     }
                     Repository.checkoutFile(args[2]);
                 } else if (args.length == 4) {
                     if (!args[2].equals("--")) {
-                        message("Incorrect operands");
+                        message("Incorrect operands.");
                         System.exit(0);
                     }
                     Repository.checkoutFile(args[1], args[3]);
