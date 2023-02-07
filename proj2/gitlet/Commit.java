@@ -92,12 +92,7 @@ public class Commit implements Serializable {
     }
 
     public static void addToCommitsHistory(Commit commit, String commitID) {
-        String[] commitInfo = new String[]{
-                commit.getParentID(),
-                commitID,
-                commit.getTimestamp(),
-                commit.getMessage()
-        };
+        String[] commitInfo = new String[]{commit.getParentID(), commitID, commit.getTimestamp(), commit.getMessage()};
         ArrayList<String[]> commitsHistory = Commit.readCommitsHistory();
         commitsHistory.add(commitInfo);
         saveCommitsHistory(commitsHistory);

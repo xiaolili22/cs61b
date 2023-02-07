@@ -1,6 +1,7 @@
 package gitlet;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 import static gitlet.Utils.*;
@@ -161,7 +162,7 @@ public class Repository {
                         + commit.getMessage() + "\n"
                         + " " + "\n";
                 allCommits.append(commitInfo);
-            } catch (Exception e) {
+            } catch (IllegalArgumentException ignored) {
             }
         }
         System.out.print(allCommits);
@@ -177,7 +178,7 @@ public class Repository {
                     String commitID = sha1(serialize(commit));
                     allCommitIDs.append(commitID + "\n");
                 }
-            } catch (Exception e) {
+            } catch (IllegalArgumentException ignored) {
             }
         }
         if (allCommitIDs.length() == 0) {
@@ -311,7 +312,8 @@ public class Repository {
 
             if (!currentFilesMapping.containsKey(fileName)
                     && isOverwrittenBy(sourceFilesMapping, fileName)) {
-                message("There is an untracked file in the way; delete it, or add and commit it first.");
+                message("There is an untracked file in the way;" +
+                        " delete it, or add and commit it first.");
                 System.exit(0);
             }
             byte[] fileContent = Repository.readFileFromBlob(branchFileSHA1);
@@ -376,12 +378,7 @@ public class Repository {
         /** Rebuild the commits history. */
         ArrayList<String[]> newCommitsHistory = new ArrayList<>();
         while (commit != null) {
-            String[] commitInfo = new String[]{
-                    commit.getParentID(),
-                    commitID,
-                    commit.getTimestamp(),
-                    commit.getMessage()
-            };
+            String[] commitInfo = new String[]{commit.getParentID(), commitID, commit.getTimestamp(), commit.getMessage()};
             newCommitsHistory.add(0, commitInfo);
             commitID = commit.getParentID();
             commit = Commit.getCommit(commitID);
