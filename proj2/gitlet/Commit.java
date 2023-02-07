@@ -2,7 +2,6 @@ package gitlet;
 
 import java.io.File;
 import java.io.Serializable;
-import java.sql.Array;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.TreeMap;
@@ -11,8 +10,6 @@ import static gitlet.Repository.*;
 import static gitlet.Utils.*;
 
 /** Represents a gitlet commit object.
- *  TODO: It's a good idea to give a description here of what else this Class
- *  does at a high level.
  *
  *  @author Xiaoli Li
  */
@@ -95,7 +92,8 @@ public class Commit implements Serializable {
     }
 
     public static void addToCommitsHistory(Commit commit, String commitID) {
-        String[] commitInfo = new String[]{commit.getParentID(), commitID, commit.getTimestamp(), commit.getMessage()};
+        String[] commitInfo = new String[]
+                {commit.getParentID(), commitID, commit.getTimestamp(), commit.getMessage()};
         ArrayList<String[]> commitsHistory = Commit.readCommitsHistory();
         commitsHistory.add(commitInfo);
         saveCommitsHistory(commitsHistory);

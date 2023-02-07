@@ -35,7 +35,7 @@ public class Main {
             /** Handle `commit [message]` command */
             case "commit":
                 validateInit();
-                if (args.length == 1) {
+                if (args.length == 1 || args[1].trim().isEmpty()) {
                     message("Please enter a commit message.");
                     break;
                 }
@@ -67,8 +67,16 @@ public class Main {
                  * Handle checkout [branch name]
                  * */
                 if (args.length == 3) {
+                    if (!args[1].equals("--")) {
+                        message("Incorrect operands");
+                        System.exit(0);
+                    }
                     Repository.checkoutFile(args[2]);
                 } else if (args.length == 4) {
+                    if (!args[2].equals("--")) {
+                        message("Incorrect operands");
+                        System.exit(0);
+                    }
                     Repository.checkoutFile(args[1], args[3]);
                 } else if (args.length == 2) {
                     Repository.checkoutBranch(args[1]);

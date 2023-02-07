@@ -1,14 +1,12 @@
 package gitlet;
 
-
 import java.io.File;
-import java.lang.reflect.Array;
 import java.util.*;
 
 import static gitlet.Utils.*;
 
 /** Represents a gitlet repository.
- *  TODO: It's a good idea to give a description here of what else this Class does at a high level.
+ *
  *
  *  @author Xiaoli Li
  */
@@ -45,7 +43,6 @@ public class Repository {
         /** Let HEAD point to current branch (master branch for now). */
         Repository.setHEAD("master");
 
-        /** Also add initialCommit to commits history of current branch (which is master branch now). */
         Commit.addToCommitsHistory(initialCommit, initialCommitID);
     }
 
@@ -67,7 +64,8 @@ public class Repository {
                 Repository.saveStagingArea(stagingArea);
             }
         /** If current working version of the file is different from parent commit. */
-        } else if (!stagingArea.containsKey(fileName) || !fileSHA1.equals(stagingArea.get(fileName))) {
+        } else if (!stagingArea.containsKey(fileName)
+                || !fileSHA1.equals(stagingArea.get(fileName))) {
             stagingArea.put(fileName, fileSHA1);
             Repository.saveStagingArea(stagingArea);
             Repository.writeFileToBlob(fileContent, fileSHA1);
@@ -161,9 +159,7 @@ public class Repository {
     public static void statusCommand() {
         List<String> branchList = plainFilenamesIn(BRANCH_POINTER_DIR);
         List<String> cwdFiles = plainFilenamesIn(CWD);
-
         StringBuilder status = new StringBuilder();
-
         String currentBranch = Repository.getHEAD();
         TreeMap<String, String> stagingArea = Repository.getStagingArea();
         TreeMap<String, String> filesMapping = Commit.getCurrentCommit().getFilesMapping();
@@ -181,7 +177,6 @@ public class Repository {
             }
             status.append(str + "\n");
         }
-
         for (Map.Entry<String, String> entry : stagingArea.entrySet()) {
             if (!entry.getValue().equals("remove")) {
                 stageForAdd.add(entry.getKey());
@@ -195,25 +190,15 @@ public class Repository {
         }
         Collections.sort(stageForAdd);
         Collections.sort(stageForRemove);
-
         status.append("\n" + "=== Staged Files ===" + "\n");
         for (String str : stageForAdd) {
             status.append(str + "\n");
         }
-
         status.append("\n" + "=== Removed Files ===" + "\n");
         for (String str : stageForRemove) {
             status.append(str + "\n");
         }
-
         for (String fileName : cwdFiles) {
-            /**
-             * Tracked in the current commit, changed in the working directory, but not staged; or
-             * Staged for addition, but with different contents than in the working directory; or
-             * The final category (“Untracked Files”) is for files present in the working directory
-             * but neither staged for addition nor tracked.
-             */
-
             byte[] fileContent = Repository.readFileFromDisc(fileName);
             if (filesMapping.containsKey(fileName)
                     && !sha1(fileContent).equals(filesMapping.get(fileName))
@@ -236,14 +221,12 @@ public class Repository {
                 }
             }
         }
-
         Collections.sort(modifiedNotStaged);
         Collections.sort(deletedNotStaged);
         Collections.sort(untracked);
-
         status.append("\n" + "=== Modifications Not Staged For Commit ===" + "\n");
         for (String str : deletedNotStaged) {
-            status.append(str + " (deleted)" + "\n" );
+            status.append(str + " (deleted)" + "\n");
         }
         for (String str : modifiedNotStaged) {
             status.append(str + " (modified)" + "\n");
@@ -295,7 +278,7 @@ public class Repository {
         for (Map.Entry<String, String> entry : sourceFilesMapping.entrySet()) {
             String fileName = entry.getKey();
             String branchFileSHA1 = entry.getValue();
-            /** If file is untracked in the current branch and would be overwritten by the checkout. */
+
             if (!currentFilesMapping.containsKey(fileName)
                     && isOverwrittenBy(sourceFilesMapping, fileName)) {
                 message("There is an untracked file in the way; delete it, or add and commit it first.");
@@ -304,7 +287,6 @@ public class Repository {
             byte[] fileContent = Repository.readFileFromBlob(branchFileSHA1);
             Repository.writeFileToDisk(fileContent, fileName);
         }
-        /**  File tracked in the current branch but are not present in the checked-out branch are deleted. */
         for (Map.Entry<String, String> entry : currentFilesMapping.entrySet()) {
             String fileName = entry.getKey();
             if (!sourceFilesMapping.containsKey(fileName)) {
