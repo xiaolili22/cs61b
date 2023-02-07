@@ -54,6 +54,16 @@ public class Main {
                 validateNumArgs("log", args, 1);
                 Repository.logCommand();
                 break;
+            case "global-log":
+                validateInit();
+                validateNumArgs("global-log", args, 1);
+                Repository.globalLogCommand();
+                break;
+            case "find":
+                validateInit();
+                validateNumArgs("find", args, 2);
+                Repository.findCommand(args[1]);
+                break;
             case "status":
                 validateInit();
                 validateNumArgs("status", args, 1);

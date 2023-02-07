@@ -149,11 +149,42 @@ public class Repository {
     }
 
     public static void globalLogCommand() {
-        // TODO
+        List<String> files = plainFilenamesIn(OBJECTS_DIR);
+        StringBuilder allCommits = new StringBuilder();
+        for (String fileName : files) {
+            try {
+                Commit commit = Commit.getCommit(fileName);
+                String commitID = sha1(serialize(commit));
+                String commitInfo = "===" + "\n"
+                        + "commit " + commitID + "\n"
+                        + "Date: " + commit.getTimestamp() + "\n"
+                        + commit.getMessage() + "\n"
+                        + " " + "\n";
+                allCommits.append(commitInfo);
+            } catch (Exception e) {
+            }
+        }
+        System.out.print(allCommits);
     }
 
     public static void findCommand(String message) {
-        // TODO
+        List<String> files = plainFilenamesIn(OBJECTS_DIR);
+        StringBuilder allCommitIDs = new StringBuilder();
+        for (String fileName : files) {
+            try {
+                Commit commit = Commit.getCommit(fileName);
+                if (commit.getMessage().equals(message)) {
+                    String commitID = sha1(serialize(commit));
+                    allCommitIDs.append(commitID + "\n");
+                }
+            } catch (Exception e) {
+            }
+        }
+        if (allCommitIDs.length() == 0) {
+            message("Found no commit with that message.");
+            System.exit(0);
+        }
+        System.out.print(allCommitIDs);
     }
 
     public static void statusCommand() {
@@ -163,7 +194,6 @@ public class Repository {
         String currentBranch = Repository.getHEAD();
         TreeMap<String, String> stagingArea = Repository.getStagingArea();
         TreeMap<String, String> filesMapping = Commit.getCurrentCommit().getFilesMapping();
-
         ArrayList<String> stageForAdd = new ArrayList<>();
         ArrayList<String> stageForRemove = new ArrayList<>();
         ArrayList<String> modifiedNotStaged = new ArrayList<>();
@@ -346,8 +376,12 @@ public class Repository {
         /** Rebuild the commits history. */
         ArrayList<String[]> newCommitsHistory = new ArrayList<>();
         while (commit != null) {
-            String[] commitInfo = new String[]
-                    {commit.getParentID(), commitID, commit.getTimestamp(), commit.getMessage()};
+            String[] commitInfo = new String[]{
+                    commit.getParentID(),
+                    commitID,
+                    commit.getTimestamp(),
+                    commit.getMessage()
+            };
             newCommitsHistory.add(0, commitInfo);
             commitID = commit.getParentID();
             commit = Commit.getCommit(commitID);
@@ -438,6 +472,7 @@ public class Repository {
     private static boolean isStagedToRemove(String fileName, TreeMap<String, String> stagingArea) {
         return stagingArea.containsKey(fileName) && stagingArea.get(fileName).equals("remove");
     }
+
 
 }
 
