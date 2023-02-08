@@ -54,7 +54,8 @@ public class Commit implements Serializable {
     }
 
     public void saveCommit(String commitID) {
-        File commit = join(OBJECTS_DIR, commitID);
+        String abbrCommitID = commitID.substring(0, 8);
+        File commit = join(OBJECTS_DIR, abbrCommitID);
         writeObject(commit, this);
     }
 
@@ -67,7 +68,8 @@ public class Commit implements Serializable {
         if (commitID == null) {
             return null;
         }
-        File commit = join(OBJECTS_DIR, commitID);
+        String abbrCommitID = commitID.substring(0, 8);
+        File commit = join(OBJECTS_DIR, abbrCommitID);
         if (!commit.exists()) {
             message("No commit with that id exists.");
             System.exit(0);

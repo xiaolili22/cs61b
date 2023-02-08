@@ -32,7 +32,7 @@ public class Repository {
 
         /** Make the initial commit and generate SHA1 of this commit. */
         Commit initialCommit = new Commit();
-        String initialCommitID = sha1(serialize(initialCommit)).substring(0, 6);
+        String initialCommitID = sha1(serialize(initialCommit));
         initialCommit.saveCommit(initialCommitID);
 
         /** Create master branch, which points to the initial commit. */
@@ -97,7 +97,7 @@ public class Repository {
         }
 
         Commit newCommit = new Commit(message, parentID, filesMapping);
-        String newCommitID = sha1(serialize(newCommit)).substring(0, 6);
+        String newCommitID = sha1(serialize(newCommit));
         newCommit.saveCommit(newCommitID);
 
         Repository.setCurrentBranchPointer(newCommitID);
@@ -152,9 +152,9 @@ public class Repository {
         List<String> files = plainFilenamesIn(OBJECTS_DIR);
         StringBuilder allCommits = new StringBuilder();
         for (String fileName : files) {
-            if (fileName.length() <= 6) {
+            if (fileName.length() <= 8) {
                 Commit commit = Commit.getCommit(fileName);
-                String commitID = sha1(serialize(commit)).substring(0,6);
+                String commitID = sha1(serialize(commit));
                 String commitInfo = "===" + "\n"
                         + "commit " + commitID + "\n"
                         + "Date: " + commit.getTimestamp() + "\n"
@@ -170,10 +170,10 @@ public class Repository {
         List<String> files = plainFilenamesIn(OBJECTS_DIR);
         StringBuilder allCommitIDs = new StringBuilder();
         for (String fileName : files) {
-            if (fileName.length() <= 6) {
+            if (fileName.length() <= 8) {
                 Commit commit = Commit.getCommit(fileName);
                 if (commit.getMessage().equals(message)) {
-                    String commitID = sha1(serialize(commit)).substring(0, 6);
+                    String commitID = sha1(serialize(commit));
                     allCommitIDs.append(commitID + "\n");
                 }
             }
