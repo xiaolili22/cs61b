@@ -75,9 +75,8 @@ public class Commit implements Serializable {
         return readObject(commit, Commit.class);
     }
 
-    /** Read commits history for the current branch. */
-    public static ArrayList<String[]> readCommitsHistory() {
-        String branch = Repository.getHEAD();
+    /** Read commits history for a certain branch. */
+    public static ArrayList<String[]> readBranchCommitsHistory(String branch) {
         File currentBranchHistory = join(HISTORY_COMMITS_DIR, branch);
         if (!currentBranchHistory.exists()) {
             return new ArrayList<>();
@@ -85,17 +84,23 @@ public class Commit implements Serializable {
         return readObject(currentBranchHistory, ArrayList.class);
     }
 
-    public static void saveCommitsHistory(ArrayList<String[]> commitsHistory) {
+    /** Read commits history for the current branch. */
+    public static ArrayList<String[]> readCurrentCommitsHistory() {
+        String branch = Repository.getHEAD();
+        return readBranchCommitsHistory(branch);
+    }
+
+    public static void saveCurrentCommitsHistory(ArrayList<String[]> commitsHistory) {
         String branch = Repository.getHEAD();
         File currentBranchHistory = join(HISTORY_COMMITS_DIR, branch);
         writeObject(currentBranchHistory, commitsHistory);
     }
 
     public static void addToCommitsHistory(Commit commit, String commitID) {
-        String[] commitInfo = new String[]{commit.getParentID(), commitID, commit.getTimestamp(), commit.getMessage()};
-        ArrayList<String[]> commitsHistory = Commit.readCommitsHistory();
+        String[] commitInfo = new String[]{commit.getParentID(), commitID};
+        ArrayList<String[]> commitsHistory = Commit.readCurrentCommitsHistory();
         commitsHistory.add(commitInfo);
-        saveCommitsHistory(commitsHistory);
+        saveCurrentCommitsHistory(commitsHistory);
     }
 }
 
