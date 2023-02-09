@@ -19,7 +19,6 @@ public class Repository {
     public static final File OBJECTS_DIR = join(GITLET_DIR, "objects");
     /** Store pointer (the latest commit) of each branch. File name is branch name. */
     public static final File BRANCH_POINTER_DIR = join(GITLET_DIR, "refs", "heads");
-    public static final File HISTORY_COMMITS_DIR = join(GITLET_DIR, "logs", "refs", "heads");
 
     public static void initCommand() {
         if (GITLET_DIR.exists()) {
@@ -28,7 +27,6 @@ public class Repository {
         }
         GITLET_DIR.mkdir();
         OBJECTS_DIR.mkdir();
-        HISTORY_COMMITS_DIR.mkdirs();
 
         /** Make the initial commit and generate SHA1 of this commit. */
         Commit initialCommit = new Commit();
@@ -42,13 +40,11 @@ public class Repository {
 
         /** Let HEAD point to current branch (master branch for now). */
         Repository.setHEAD("master");
-
-        Commit.addToCommitsHistory(initialCommit, initialCommitID);
     }
 
     public static void addCommand(String fileName) {
         /** Get SHA1 according to the file's content. */
-        byte[] fileContent = Blob.readFileFromDisc(fileName);
+        String fileContent = Blob.readFileFromDisc(fileName);
         String fileSHA1 = sha1(fileContent);
 
         /** Get mapping info from the staging area and parent commit. */
@@ -101,8 +97,6 @@ public class Repository {
         newCommit.saveCommit(newCommitID);
 
         Repository.setCurrentBranchPointer(newCommitID);
-        Commit.addToCommitsHistory(newCommit, newCommitID);
-
         stagingArea.clear();
         Repository.saveStagingArea(stagingArea);
     }
@@ -149,19 +143,16 @@ public class Repository {
     }
 
     public static void globalLogCommand() {
-        List<String> files = plainFilenamesIn(OBJECTS_DIR);
         StringBuilder allCommits = new StringBuilder();
-        for (String fileName : files) {
-            if (fileName.length() <= 8) {
-                Commit commit = Commit.getCommit(fileName);
-                String commitID = sha1(serialize(commit));
-                String commitInfo = "===" + "\n"
-                        + "commit " + commitID + "\n"
-                        + "Date: " + commit.getTimestamp() + "\n"
-                        + commit.getMessage() + "\n"
-                        + " " + "\n";
-                allCommits.append(commitInfo);
-            }
+        for (String fileName : Commit.commitFileNames()) {
+            Commit commit = Commit.getCommit(fileName);
+            String commitID = sha1(serialize(commit));
+            String commitInfo = "===" + "\n"
+                    + "commit " + commitID + "\n"
+                    + "Date: " + commit.getTimestamp() + "\n"
+                    + commit.getMessage() + "\n"
+                    + " " + "\n";
+            allCommits.append(commitInfo);
         }
         System.out.print(allCommits);
     }
@@ -225,7 +216,7 @@ public class Repository {
             status.append(str + "\n");
         }
         for (String fileName : cwdFiles) {
-            byte[] fileContent = Blob.readFileFromDisc(fileName);
+            String fileContent = Blob.readFileFromDisc(fileName);
             if (filesMapping.containsKey(fileName)
                     && !sha1(fileContent).equals(filesMapping.get(fileName))
                     && !stagingArea.containsKey(fileName)) {
@@ -276,7 +267,7 @@ public class Repository {
             message("File does not exist in that commit.");
             System.exit(0);
         }
-        byte[] fileContent = Blob.readFileFromBlob(filesMapping.get(fileName));
+        String fileContent = Blob.readFileFromBlob(filesMapping.get(fileName));
         Blob.writeFileToDisk(fileContent, fileName);
     }
 
@@ -311,7 +302,7 @@ public class Repository {
                         + " delete it, or add and commit it first.");
                 System.exit(0);
             }
-            byte[] fileContent = Blob.readFileFromBlob(branchFileSHA1);
+            String fileContent = Blob.readFileFromBlob(branchFileSHA1);
             Blob.writeFileToDisk(fileContent, fileName);
         }
         for (Map.Entry<String, String> entry : currentFilesMapping.entrySet()) {
@@ -332,10 +323,6 @@ public class Repository {
         /** Get the current branch pointer and write to new branch's pointer file. */
         String headPointer = Repository.getCurrentBranchPointer();
         writeContents(branchPointer, headPointer);
-        /** copy commits history to this branch's file under logs directory. */
-        ArrayList<String[]> inheritedHistory = Commit.readCurrentCommitsHistory();
-        File branchHistory = join(HISTORY_COMMITS_DIR, branch);
-        writeObject(branchHistory, inheritedHistory);
     }
 
     public static void removeBranchCommand(String branch) {
@@ -351,9 +338,6 @@ public class Repository {
             System.exit(0);
         }
         branchPointer.delete();
-
-        File branchHistory = join(HISTORY_COMMITS_DIR, branch);
-        branchHistory.delete();
     }
 
     public static void resetCommand(String commitID) {
@@ -365,19 +349,39 @@ public class Repository {
         /** Update the current branch head. */
         Repository.setCurrentBranchPointer(commitID);
         Repository.clearStagingArea();
-        /** Rebuild the commits history. */
-        ArrayList<String[]> newCommitsHistory = new ArrayList<>();
-        while (commit != null) {
-            String[] commitInfo = new String[]{commit.getParentID(), commitID};
-            newCommitsHistory.add(0, commitInfo);
-            commitID = commit.getParentID();
-            commit = Commit.getCommit(commitID);
-        }
-        Commit.saveCurrentCommitsHistory(newCommitsHistory);
     }
 
     public static void mergeCommand(String branch) {
-        // Find the split point.
+        TreeMap<String, String> stagingArea = Repository.getStagingArea();
+        if (!stagingArea.isEmpty()) {
+            message("You have uncommitted changes.");
+            System.exit(0);
+        }
+        if (!join(BRANCH_POINTER_DIR, branch).exists()) {
+            message("A branch with that name does not exist.");
+            System.exit(0);
+        }
+        String currBranchName = getHEAD();
+        if (currBranchName.equals(branch)) {
+            message("Cannot merge a branch with itself.");
+            System.exit(0);
+        }
+        String branchPointer = Repository.getBranchPointer(branch);
+        String currBranchPointer = Repository.getCurrentBranchPointer();
+        if (branchPointer.equals(currBranchPointer)) {
+            message("Given branch is an ancestor of the current branch.");
+            System.exit(0);
+        }
+        String splitPoint = Commit.findSpitPoint(currBranchName, branch);
+        if (splitPoint.equals(currBranchPointer)) {
+            checkoutBranch(branch);
+            Repository.setCurrentBranchPointer(branchPointer);
+            message("Current branch fast-forwarded.");
+            System.exit(0);
+        }
+
+        //TODO: to continue
+
     }
 
     public static void setHEAD(String branch) {

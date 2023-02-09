@@ -2,9 +2,7 @@ package gitlet;
 
 import java.io.File;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.TreeMap;
+import java.util.*;
 
 import static gitlet.Repository.*;
 import static gitlet.Utils.*;
@@ -13,11 +11,13 @@ import static gitlet.Utils.*;
  *
  *  @author Xiaoli Li
  */
+
 public class Commit implements Serializable {
 
     private final String message;
     private final String timestamp;
     private final String parentID;
+    private String secondParentID;
     private TreeMap<String, String> filesMapping;
 
     /** No-argument constructor for the initial commit. */
@@ -49,6 +49,14 @@ public class Commit implements Serializable {
         return this.parentID;
     }
 
+    public String getSecondParentID() {
+        return this.secondParentID;
+    }
+
+    public void setSecondParentID(String parentID) {
+        this.secondParentID = parentID;
+    }
+
     public TreeMap<String, String> getFilesMapping() {
         return this.filesMapping;
     }
@@ -77,33 +85,61 @@ public class Commit implements Serializable {
         return readObject(commit, Commit.class);
     }
 
-    /** Read commits history for a certain branch. */
-    public static ArrayList<String[]> readBranchCommitsHistory(String branch) {
-        File currentBranchHistory = join(HISTORY_COMMITS_DIR, branch);
-        if (!currentBranchHistory.exists()) {
-            return new ArrayList<>();
+    /** Generate file names array of all commits. */
+    public static List<String> commitFileNames() {
+        List<String> files = plainFilenamesIn(OBJECTS_DIR);
+        List<String> commitFiles = new ArrayList<>();
+        for (String file : files) {
+            if (file.length() <= 8) {
+                commitFiles.add(file);
+            }
         }
-        return readObject(currentBranchHistory, ArrayList.class);
+        return commitFiles;
     }
 
-    /** Read commits history for the current branch. */
-    public static ArrayList<String[]> readCurrentCommitsHistory() {
-        String branch = Repository.getHEAD();
-        return readBranchCommitsHistory(branch);
+    public static ArrayList<String> findAncestors(String commitID) {
+        ArrayList<String> ancestors = new ArrayList<>();
+        Queue<String> parents = new ArrayDeque<>();
+
+        ancestors.add(commitID);
+        parents.add(commitID);
+
+        while (!parents.isEmpty()) {
+            String aCommit = parents.remove();
+            Commit commit = Commit.getCommit(aCommit);
+
+            String parent1 = commit.getParentID();
+            if (parent1 != null && !ancestors.contains(parent1)) {
+                ancestors.add(parent1);
+                parents.add(parent1);
+            }
+
+            String parent2 = commit.getSecondParentID();
+            if (parent2 != null && !ancestors.contains(parent2)) {
+                ancestors.add(parent2);
+                parents.add(parent2);
+            }
+        }
+        return ancestors;
     }
 
-    public static void saveCurrentCommitsHistory(ArrayList<String[]> commitsHistory) {
-        String branch = Repository.getHEAD();
-        File currentBranchHistory = join(HISTORY_COMMITS_DIR, branch);
-        writeObject(currentBranchHistory, commitsHistory);
-    }
+    public static String findSpitPoint(String branch1, String branch2) {
+        String commitID1 = Repository.getBranchPointer(branch1);
+        String commitID2 = Repository.getBranchPointer(branch2);
 
-    public static void addToCommitsHistory(Commit commit, String commitID) {
-        String[] commitInfo = new String[]{commit.getParentID(), commitID};
-        ArrayList<String[]> commitsHistory = Commit.readCurrentCommitsHistory();
-        commitsHistory.add(commitInfo);
-        saveCurrentCommitsHistory(commitsHistory);
+        ArrayList<String> commit1Ancestors = findAncestors(commitID1);
+        ArrayList<String> commit2Ancestors = findAncestors(commitID2);
+
+        String latestCommonAncestor = null;
+        for (String ancestor : commit2Ancestors) {
+            if (commit1Ancestors.contains(ancestor)) {
+                latestCommonAncestor = ancestor;
+                break;
+            }
+        }
+        return latestCommonAncestor;
     }
 }
+
 
 
