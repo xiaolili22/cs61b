@@ -46,4 +46,47 @@ public class Blob {
         return (join(CWD, fileName)).exists()
                 && !sha1(Blob.readFileFromDisc(fileName)).equals(filesMapping.get(fileName));
     }
+
+    public static boolean isChangedDiff(String fileName,
+                                        TreeMap<String, String> splitMapping,
+                                        TreeMap<String, String> currMapping,
+                                        TreeMap<String, String> otherMapping) {
+        if (splitMapping.get(fileName).equals(currMapping.get(fileName))) {
+            return false;
+        }
+        if (splitMapping.get(fileName).equals(otherMapping.get(fileName))) {
+            return false;
+        }
+        if (!currMapping.containsKey(fileName) && !otherMapping.containsKey(fileName)) {
+            return false;
+        }
+        if (currMapping.get(fileName).equals(otherMapping.get(fileName))) {
+            return false;
+        }
+        return true;
+    }
+
+    public static void handleConflict(String fileName,
+                                      TreeMap<String, String> currMapping,
+                                      TreeMap<String, String> otherMapping) {
+        StringBuilder result = new StringBuilder();
+        result.append("<<<<<<< HEAD" + "\n");
+        String currFileContent = " ";
+        if (currMapping.containsKey(fileName)) {
+            currFileContent = readFileFromBlob(currMapping.get(fileName));
+        }
+        result.append(currFileContent + "\n");
+
+        result.append("=======" + "\n");
+        String otherFileContent = " ";
+        if (otherMapping.containsKey(fileName)) {
+            otherFileContent = readFileFromBlob(otherMapping.get(fileName));
+        }
+        result.append(otherFileContent + "\n");
+        result.append(">>>>>>>" + "\n");
+
+        writeFileToDisk(result.toString(), fileName);
+
+        message("Encountered a merge conflict.");
+    }
 }

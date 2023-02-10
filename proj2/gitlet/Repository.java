@@ -101,6 +101,38 @@ public class Repository {
         Repository.saveStagingArea(stagingArea);
     }
 
+    public static void mergeCommit(String message, String parentID1, String parentID2) {
+        TreeMap<String, String> stagingArea = Repository.getStagingArea();
+        if (stagingArea.isEmpty()) {
+            message("No changes added to the commit.");
+            System.exit(0);
+        }
+        TreeMap<String, String> filesMapping = Commit.getCurrentCommit().getFilesMapping();
+        /**
+         * Iterate through stagingArea,
+         * if the value for a key is "remove", then remove it from newCommit,
+         * otherwise replace the value with the one in stagingArea.
+         * */
+        for (Map.Entry<String, String> entry : stagingArea.entrySet()) {
+            String key = entry.getKey();
+            String value = entry.getValue();
+            if (value.equals("remove")) {
+                filesMapping.remove(key);
+            } else {
+                filesMapping.put(key, value);
+            }
+        }
+
+        Commit newCommit = new Commit(message, parentID1, filesMapping);
+        newCommit.setSecondParentID(parentID2);
+        String newCommitID = sha1(serialize(newCommit));
+        newCommit.saveCommit(newCommitID);
+
+        Repository.setCurrentBranchPointer(newCommitID);
+        stagingArea.clear();
+        Repository.saveStagingArea(stagingArea);
+    }
+
     public static void removeCommand(String fileName) {
         TreeMap<String, String> stagingArea = Repository.getStagingArea();
         TreeMap<String, String> filesMapping = Commit.getCurrentCommit().getFilesMapping();
@@ -352,8 +384,7 @@ public class Repository {
     }
 
     public static void mergeCommand(String branch) {
-        TreeMap<String, String> stagingArea = Repository.getStagingArea();
-        if (!stagingArea.isEmpty()) {
+        if (!Repository.getStagingArea().isEmpty()) {
             message("You have uncommitted changes.");
             System.exit(0);
         }
@@ -366,22 +397,73 @@ public class Repository {
             message("Cannot merge a branch with itself.");
             System.exit(0);
         }
-        String branchPointer = Repository.getBranchPointer(branch);
+        String otherBranchPointer = Repository.getBranchPointer(branch);
         String currBranchPointer = Repository.getCurrentBranchPointer();
-        if (branchPointer.equals(currBranchPointer)) {
+        if (otherBranchPointer.equals(currBranchPointer)) {
             message("Given branch is an ancestor of the current branch.");
             System.exit(0);
         }
+
         String splitPoint = Commit.findSpitPoint(currBranchName, branch);
         if (splitPoint.equals(currBranchPointer)) {
             checkoutBranch(branch);
-            Repository.setCurrentBranchPointer(branchPointer);
+            Repository.setCurrentBranchPointer(otherBranchPointer);
             message("Current branch fast-forwarded.");
             System.exit(0);
         }
 
-        //TODO: to continue
+        TreeMap<String, String> currMapping = Commit.getCurrentCommit().getFilesMapping();
+        TreeMap<String, String> splitMapping = Commit.getCommit(splitPoint).getFilesMapping();
+        TreeMap<String, String> otherMapping = Commit.getCommit(otherBranchPointer).getFilesMapping();
+        /** First iterate the files in split point. */
+        for (Map.Entry<String, String> entry : splitMapping.entrySet()) {
+            String fileName = entry.getKey();
+            String fileSHA1 = entry.getValue();
+            /** Present and not modified in HEAD.
+             * 1, not present in other.
+             * 2, present in other but modified. */
+            if (currMapping.containsKey(fileName)
+                    && currMapping.get(fileName).equals(fileSHA1)) {
+                if (!otherMapping.containsKey(fileName)) {
+                    removeCommand(fileName);
+                } else if (!otherMapping.get(fileName).equals(fileSHA1)) {
+                    checkoutFile(otherBranchPointer, fileName);
+                    addCommand(fileName);
+                }
+            }
+            if (Blob.isChangedDiff(fileName, splitMapping, currMapping, otherMapping)) {
+                Blob.handleConflict(fileName, currMapping, otherMapping);
+                addCommand(fileName);
+            }
+        }
+        /** Then handle files in current branch but not present in split point. */
+        for (Map.Entry<String, String> entry : currMapping.entrySet()) {
+            String currFileName = entry.getKey();
+            String currFileSHA1 = entry.getValue();
+            if (!splitMapping.containsKey(currFileName)
+                    && otherMapping.containsKey(currFileName)
+                    && !otherMapping.get(currFileName).equals(currFileSHA1)) {
+                Blob.handleConflict(currFileName, currMapping, otherMapping);
+                addCommand(currFileName);
+            }
+        }
 
+        /** Lastly handle files only in other branch. */
+        for (Map.Entry<String, String> entry : otherMapping.entrySet()) {
+            String otherFileName = entry.getKey();
+            if (!splitMapping.containsKey(otherFileName)
+                    && !currMapping.containsKey(otherFileName)) {
+                if (Blob.isOverwrittenBy(otherFileName, otherMapping)) {
+                    message("There is an untracked file in the way; delete it, or add and commit it first.");
+                    System.exit(0);
+                }
+                checkoutFile(otherBranchPointer, otherFileName);
+                addCommand(otherFileName);
+            }
+        }
+        /** Make the merge conflict. */
+        String message = "Merged " + branch +  " into " + currBranchName + ".";
+        mergeCommit(message, currBranchPointer,otherBranchPointer);
     }
 
     public static void setHEAD(String branch) {
