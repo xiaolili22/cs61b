@@ -80,7 +80,7 @@ public class Blob {
         if (currMapping.containsKey(fileName)) {
             currFileContent = readFileFromBlob(currMapping.get(fileName));
         }
-        result.append(currFileContent + "\n");
+        result.append(currFileContent);
 
         result.append("=======" + "\n");
         String otherFileContent = "";
