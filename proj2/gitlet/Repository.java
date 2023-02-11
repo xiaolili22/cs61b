@@ -397,7 +397,22 @@ public class Repository {
         TreeMap<String, String> currMapping = Commit.getCurrentCommit().getFilesMapping();
         TreeMap<String, String> splitMapping = Commit.getCommit(splitPoint).getFilesMapping();
         TreeMap<String, String> otherMapping = Commit.getCommit(otherBrPointer).getFilesMapping();
-        /** First iterates the files in split point. */
+        /** First handles files only in given branch.
+         * Because error may occur in this part and exit program. */
+        for (Map.Entry<String, String> entry : otherMapping.entrySet()) {
+            String otherFileName = entry.getKey();
+            if (!splitMapping.containsKey(otherFileName)
+                    && !currMapping.containsKey(otherFileName)) {
+                if (Blob.isOverwrittenBy(otherFileName, otherMapping)) {
+                    message("There is an untracked file in the way; "
+                            + "delete it, or add and commit it first.");
+                    System.exit(0);
+                }
+                checkoutFile(otherBrPointer, otherFileName);
+                addCommand(otherFileName);
+            }
+        }
+        /** Then iterates the files in split point. */
         for (Map.Entry<String, String> entry : splitMapping.entrySet()) {
             String fileName = entry.getKey();
             /** Handles file present and not modified in HEAD, but
@@ -426,20 +441,6 @@ public class Repository {
                     && !otherMapping.get(currFileName).equals(entry.getValue())) {
                 Blob.handleConflict(currFileName, currMapping, otherMapping);
                 addCommand(currFileName);
-            }
-        }
-        /** Lastly handles files only in given branch. */
-        for (Map.Entry<String, String> entry : otherMapping.entrySet()) {
-            String otherFileName = entry.getKey();
-            if (!splitMapping.containsKey(otherFileName)
-                    && !currMapping.containsKey(otherFileName)) {
-                if (Blob.isOverwrittenBy(otherFileName, otherMapping)) {
-                    message("There is an untracked file in the way; "
-                            + "delete it, or add and commit it first.");
-                    System.exit(0);
-                }
-                checkoutFile(otherBrPointer, otherFileName);
-                addCommand(otherFileName);
             }
         }
         /** Creates commit for the merging. */
