@@ -88,7 +88,7 @@ public class Blob {
             otherFileContent = readFileFromBlob(otherMapping.get(fileName));
         }
         result.append(otherFileContent);
-        result.append(">>>>>>>");
+        result.append(">>>>>>>" + "\n");
 
         writeFileToDisk(result.toString(), fileName);
         message("Encountered a merge conflict.");

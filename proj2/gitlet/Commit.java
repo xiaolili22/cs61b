@@ -52,8 +52,8 @@ public class Commit implements Serializable {
         return this.secondParentID;
     }
 
-    public void setSecondParentID(String parentID) {
-        this.secondParentID = parentID;
+    public void setSecondParentID(String parentID2) {
+        this.secondParentID = parentID2;
     }
 
     /** Stores a mapping of file names to blob references. */

@@ -381,37 +381,34 @@ public class Repository {
             message("Cannot merge a branch with itself.");
             System.exit(0);
         }
-        String otherBranchPointer = Repository.getBranchPointer(branch);
-        String currBranchPointer = Repository.getCurrentBranchPointer();
-        if (Commit.isAncestor(otherBranchPointer, currBranchPointer)) {
+        String otherBrPointer = Repository.getBranchPointer(branch);
+        String currBrPointer = Repository.getCurrentBranchPointer();
+        if (Commit.isAncestor(otherBrPointer, currBrPointer)) {
             message("Given branch is an ancestor of the current branch.");
             System.exit(0);
         }
-
         String splitPoint = Commit.findSpitPoint(currBranchName, branch);
-        if (splitPoint.equals(currBranchPointer)) {
+        if (splitPoint.equals(currBrPointer)) {
             checkoutBranch(branch);
-            Repository.setCurrentBranchPointer(otherBranchPointer);
+            Repository.setCurrentBranchPointer(otherBrPointer);
             message("Current branch fast-forwarded.");
             System.exit(0);
         }
-
         TreeMap<String, String> currMapping = Commit.getCurrentCommit().getFilesMapping();
         TreeMap<String, String> splitMapping = Commit.getCommit(splitPoint).getFilesMapping();
-        TreeMap<String, String> otherMapping = Commit.getCommit(otherBranchPointer).getFilesMapping();
+        TreeMap<String, String> otherMapping = Commit.getCommit(otherBrPointer).getFilesMapping();
         /** First iterates the files in split point. */
         for (Map.Entry<String, String> entry : splitMapping.entrySet()) {
             String fileName = entry.getKey();
-            String fileSHA1 = entry.getValue();
             /** Handles file present and not modified in HEAD, but
              * 1, not present in the other.
              * 2, present in other but modified. */
             if (currMapping.containsKey(fileName)
-                    && currMapping.get(fileName).equals(fileSHA1)) {
+                    && currMapping.get(fileName).equals(entry.getValue())) {
                 if (!otherMapping.containsKey(fileName)) {
                     removeCommand(fileName);
-                } else if (!otherMapping.get(fileName).equals(fileSHA1)) {
-                    checkoutFile(otherBranchPointer, fileName);
+                } else if (!otherMapping.get(fileName).equals(entry.getValue())) {
+                    checkoutFile(otherBrPointer, fileName);
                     addCommand(fileName);
                 }
             }
@@ -424,32 +421,30 @@ public class Repository {
         /** Handles files in current branch but not present in split point. */
         for (Map.Entry<String, String> entry : currMapping.entrySet()) {
             String currFileName = entry.getKey();
-            String currFileSHA1 = entry.getValue();
             if (!splitMapping.containsKey(currFileName)
                     && otherMapping.containsKey(currFileName)
-                    && !otherMapping.get(currFileName).equals(currFileSHA1)) {
+                    && !otherMapping.get(currFileName).equals(entry.getValue())) {
                 Blob.handleConflict(currFileName, currMapping, otherMapping);
                 addCommand(currFileName);
             }
         }
-
         /** Lastly handles files only in given branch. */
         for (Map.Entry<String, String> entry : otherMapping.entrySet()) {
             String otherFileName = entry.getKey();
             if (!splitMapping.containsKey(otherFileName)
                     && !currMapping.containsKey(otherFileName)) {
                 if (Blob.isOverwrittenBy(otherFileName, otherMapping)) {
-                    message("There is an untracked file in the way; " +
-                            "delete it, or add and commit it first.");
+                    message("There is an untracked file in the way; "
+                            + "delete it, or add and commit it first.");
                     System.exit(0);
                 }
-                checkoutFile(otherBranchPointer, otherFileName);
+                checkoutFile(otherBrPointer, otherFileName);
                 addCommand(otherFileName);
             }
         }
         /** Creates commit for the merging. */
         String message = "Merged " + branch +  " into " + currBranchName + ".";
-        mergeCommit(message, currBranchPointer,otherBranchPointer);
+        mergeCommit(message, currBrPointer, otherBrPointer);
     }
 
     /** Sets the HEAD pointer. */
