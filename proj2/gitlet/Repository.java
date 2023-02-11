@@ -7,7 +7,6 @@ import static gitlet.Utils.*;
 
 /** Represents a gitlet repository.
  *
- *
  *  @author Xiaoli Li
  */
 public class Repository {
@@ -15,9 +14,9 @@ public class Repository {
     public static final File CWD = new File(System.getProperty("user.dir"));
     /** The .gitlet directory. */
     public static final File GITLET_DIR = join(CWD, ".gitlet");
-    /** Store versioned files and history commit, using SHA1 as name. */
+    /** Stores versioned files and commits, using SHA1 as name. */
     public static final File OBJECTS_DIR = join(GITLET_DIR, "objects");
-    /** Store pointer (the latest commit) of each branch. File name is branch name. */
+    /** Stores pointer (the latest commit) of each branch. File name is branch name. */
     public static final File BRANCH_POINTER_DIR = join(GITLET_DIR, "refs", "heads");
 
     public static void initCommand() {
@@ -28,12 +27,12 @@ public class Repository {
         GITLET_DIR.mkdir();
         OBJECTS_DIR.mkdir();
 
-        /** Make the initial commit and generate SHA1 of this commit. */
+        /** Creates the initial commit and generates SHA1 of this commit. */
         Commit initialCommit = new Commit();
         String initialCommitID = sha1(serialize(initialCommit));
         initialCommit.saveCommit(initialCommitID);
 
-        /** Create master branch, which points to the initial commit. */
+        /** Creates master branch, which points to the initial commit. */
         BRANCH_POINTER_DIR.mkdirs();
         File masterBranchPointer = join(BRANCH_POINTER_DIR, "master");
         writeContents(masterBranchPointer, initialCommitID);
@@ -43,16 +42,16 @@ public class Repository {
     }
 
     public static void addCommand(String fileName) {
-        /** Get SHA1 according to the file's content. */
+        /** Gets SHA1 according to the file's content. */
         String fileContent = Blob.readFileFromDisc(fileName);
         String fileSHA1 = sha1(fileContent);
 
-        /** Get mapping info from the staging area and parent commit. */
+        /** Gets mapping info from the staging area and parent commit. */
         TreeMap<String, String> stagingArea = Repository.getStagingArea();
         TreeMap<String, String> parentFilesMapping = Commit.getCurrentCommit().getFilesMapping();
 
         /**
-         * If current working version of the file is the same as the version in parent commit,
+         * If current working version of the file is the same as in parent commit,
          * the remove method will remove the file from staging area if it exists.
          * */
         if (fileSHA1.equals(parentFilesMapping.get(fileName))) {
@@ -68,39 +67,12 @@ public class Repository {
         }
     }
 
+    /** Creates a normal commit. */
     public static void commitCommand(String message) {
-        TreeMap<String, String> stagingArea = Repository.getStagingArea();
-        if (stagingArea.isEmpty()) {
-            message("No changes added to the commit.");
-            System.exit(0);
-        }
-
         String parentID = Repository.getCurrentBranchPointer();
-        TreeMap<String, String> filesMapping = Commit.getCurrentCommit().getFilesMapping();
-        /**
-         * Iterate through stagingArea,
-         * if the value for a key is "remove", then remove it from newCommit,
-         * otherwise replace the value with the one in stagingArea.
-         * */
-        for (Map.Entry<String, String> entry : stagingArea.entrySet()) {
-            String key = entry.getKey();
-            String value = entry.getValue();
-            if (value.equals("remove")) {
-                filesMapping.remove(key);
-            } else {
-                filesMapping.put(key, value);
-            }
-        }
-
-        Commit newCommit = new Commit(message, parentID, filesMapping);
-        String newCommitID = sha1(serialize(newCommit));
-        newCommit.saveCommit(newCommitID);
-
-        Repository.setCurrentBranchPointer(newCommitID);
-        stagingArea.clear();
-        Repository.saveStagingArea(stagingArea);
+        mergeCommit(message, parentID, null);
     }
-
+    /** Creates a commit for merging. */
     public static void mergeCommit(String message, String parentID1, String parentID2) {
         TreeMap<String, String> stagingArea = Repository.getStagingArea();
         if (stagingArea.isEmpty()) {
@@ -109,7 +81,7 @@ public class Repository {
         }
         TreeMap<String, String> filesMapping = Commit.getCurrentCommit().getFilesMapping();
         /**
-         * Iterate through stagingArea,
+         * Iterates through stagingArea,
          * if the value for a key is "remove", then remove it from newCommit,
          * otherwise replace the value with the one in stagingArea.
          * */
@@ -141,11 +113,11 @@ public class Repository {
             message("No reason to remove the file.");
             System.exit(0);
         }
-        /** Unstage the files if it's currently staged for addition. */
+        /** Unstages the files if it's currently staged for addition. */
         if (stagingArea.containsKey(fileName)) {
             stagingArea.remove(fileName);
         }
-        /** If tracked in current commit, stage it for removal and remove file from the WD. */
+        /** If tracked in current commit, stages it for removal and remove file from CWD. */
         if (filesMapping.containsKey(fileName)) {
             stagingArea.put(fileName, "remove");
             File file = join(CWD, fileName);
@@ -160,9 +132,17 @@ public class Repository {
         String commitInfo;
         StringBuilder commitsHistory = new StringBuilder();
         String commitID = Repository.getCurrentBranchPointer();
+        String mergeInfo = "";
+        /** For commits with second parent. */
+        if (commit.getSecondParentID() != null) {
+            mergeInfo = "Merge: "
+                    + commit.getParentID().substring(0, 7) + " "
+                    + commit.getSecondParentID().substring(0, 7) + "\n";
+        }
         while (commit != null) {
             commitInfo = "===" + "\n"
                     + "commit " + commitID + "\n"
+                    + mergeInfo
                     + "Date: " + commit.getTimestamp() + "\n"
                     + commit.getMessage() + "\n"
                     + " " + "\n";
@@ -261,7 +241,7 @@ public class Repository {
                 untracked.add(fileName);
             }
         }
-        /** Not staged for removal, but tracked in the current commit and deleted from the wd. */
+        /** Not staged for removal, but tracked in the current commit and deleted from CWD. */
         for (Map.Entry<String, String> entry : filesMapping.entrySet()) {
             if (!join(CWD, entry.getKey()).exists()
                     && !Blob.isStagedToRemove(entry.getKey(), stagingArea)) {
@@ -287,11 +267,12 @@ public class Repository {
         System.out.println(status);
     }
 
+    /** Checks out a file from current branch. */
     public static void checkoutFile(String fileName) {
-        String parentID = Repository.getCurrentBranchPointer();
-        checkoutFile(parentID, fileName);
+        String commitID = Repository.getCurrentBranchPointer();
+        checkoutFile(commitID, fileName);
     }
-
+    /** Checks out a file from a given branch. */
     public static void checkoutFile(String commitID, String fileName) {
         Commit commit = Commit.getCommit(commitID);
         TreeMap<String, String> filesMapping = commit.getFilesMapping();
@@ -302,7 +283,7 @@ public class Repository {
         String fileContent = Blob.readFileFromBlob(filesMapping.get(fileName));
         Blob.writeFileToDisk(fileContent, fileName);
     }
-
+    /** Checks out an entire branch. */
     public static void checkoutBranch(String branch) {
         if (Repository.getHEAD().equals(branch)) {
             message("No need to checkout the current branch.");
@@ -320,10 +301,11 @@ public class Repository {
         Repository.setHEAD(branch);
         Repository.clearStagingArea();
     }
-
+    /** Updates file contents in working directory,
+     * given the mapping of file names to blob references. */
     private static void updateCWD(TreeMap<String, String> sourceFilesMapping,
                            TreeMap<String, String> currentFilesMapping) {
-        /** Take all files in the head of the given branch, put them into WD. */
+        /** Takes all files in the given branch, puts them into WD. */
         for (Map.Entry<String, String> entry : sourceFilesMapping.entrySet()) {
             String fileName = entry.getKey();
             String branchFileSHA1 = entry.getValue();
@@ -337,6 +319,8 @@ public class Repository {
             String fileContent = Blob.readFileFromBlob(branchFileSHA1);
             Blob.writeFileToDisk(fileContent, fileName);
         }
+        /** Deletes files tracked in the current branch
+         * but are not present in the checked-out branch. */
         for (Map.Entry<String, String> entry : currentFilesMapping.entrySet()) {
             String fileName = entry.getKey();
             if (!sourceFilesMapping.containsKey(fileName)) {
@@ -352,7 +336,7 @@ public class Repository {
             message("A branch with that name already exists.");
             System.exit(0);
         }
-        /** Get the current branch pointer and write to new branch's pointer file. */
+        /** Gets the current branch pointer and updates new branch's pointer. */
         String headPointer = Repository.getCurrentBranchPointer();
         writeContents(branchPointer, headPointer);
     }
@@ -373,12 +357,12 @@ public class Repository {
     }
 
     public static void resetCommand(String commitID) {
-        /** First checkout to the commit. */
+        /** Checks out all the files tracked by the given commit. */
         Commit commit = Commit.getCommit(commitID);
         TreeMap<String, String> sourceFilesMapping = commit.getFilesMapping();
         TreeMap<String, String> currentFilesMapping = Commit.getCurrentCommit().getFilesMapping();
         updateCWD(sourceFilesMapping, currentFilesMapping);
-        /** Update the current branch head. */
+        /** Updates current branch's head. */
         Repository.setCurrentBranchPointer(commitID);
         Repository.clearStagingArea();
     }
@@ -399,7 +383,7 @@ public class Repository {
         }
         String otherBranchPointer = Repository.getBranchPointer(branch);
         String currBranchPointer = Repository.getCurrentBranchPointer();
-        if (otherBranchPointer.equals(currBranchPointer)) {
+        if (Commit.isAncestor(otherBranchPointer, currBranchPointer)) {
             message("Given branch is an ancestor of the current branch.");
             System.exit(0);
         }
@@ -415,12 +399,12 @@ public class Repository {
         TreeMap<String, String> currMapping = Commit.getCurrentCommit().getFilesMapping();
         TreeMap<String, String> splitMapping = Commit.getCommit(splitPoint).getFilesMapping();
         TreeMap<String, String> otherMapping = Commit.getCommit(otherBranchPointer).getFilesMapping();
-        /** First iterate the files in split point. */
+        /** First iterates the files in split point. */
         for (Map.Entry<String, String> entry : splitMapping.entrySet()) {
             String fileName = entry.getKey();
             String fileSHA1 = entry.getValue();
-            /** Present and not modified in HEAD.
-             * 1, not present in other.
+            /** Handles file present and not modified in HEAD, but
+             * 1, not present in the other.
              * 2, present in other but modified. */
             if (currMapping.containsKey(fileName)
                     && currMapping.get(fileName).equals(fileSHA1)) {
@@ -431,12 +415,13 @@ public class Repository {
                     addCommand(fileName);
                 }
             }
-            if (Blob.isChangedDiff(fileName, splitMapping, currMapping, otherMapping)) {
+            /** Handles file modified differently in current and given branches. */
+            if (Blob.isModifiedDiff(fileName, splitMapping, currMapping, otherMapping)) {
                 Blob.handleConflict(fileName, currMapping, otherMapping);
                 addCommand(fileName);
             }
         }
-        /** Then handle files in current branch but not present in split point. */
+        /** Handles files in current branch but not present in split point. */
         for (Map.Entry<String, String> entry : currMapping.entrySet()) {
             String currFileName = entry.getKey();
             String currFileSHA1 = entry.getValue();
@@ -448,43 +433,46 @@ public class Repository {
             }
         }
 
-        /** Lastly handle files only in other branch. */
+        /** Lastly handles files only in given branch. */
         for (Map.Entry<String, String> entry : otherMapping.entrySet()) {
             String otherFileName = entry.getKey();
             if (!splitMapping.containsKey(otherFileName)
                     && !currMapping.containsKey(otherFileName)) {
                 if (Blob.isOverwrittenBy(otherFileName, otherMapping)) {
-                    message("There is an untracked file in the way; delete it, or add and commit it first.");
+                    message("There is an untracked file in the way; " +
+                            "delete it, or add and commit it first.");
                     System.exit(0);
                 }
                 checkoutFile(otherBranchPointer, otherFileName);
                 addCommand(otherFileName);
             }
         }
-        /** Make the merge conflict. */
+        /** Creates commit for the merging. */
         String message = "Merged " + branch +  " into " + currBranchName + ".";
         mergeCommit(message, currBranchPointer,otherBranchPointer);
     }
 
+    /** Sets the HEAD pointer. */
     public static void setHEAD(String branch) {
         File head = join(GITLET_DIR, "HEAD");
         String info = "ref: refs/heads/" + branch;
         writeContents(head, info);
     }
 
-    /** Return current active branch's name. */
+    /** Returns current branch's name. */
     public static String getHEAD() {
         File head = join(GITLET_DIR, "HEAD");
         String[] info = readContentsAsString(head).split("/");
         return info[info.length - 1];
     }
 
-    /** Return current active branch's latest commit ID. */
+    /** Returns current branch's latest commit ID. */
     public static String getCurrentBranchPointer() {
         String branch = getHEAD();
         return getBranchPointer(branch);
     }
 
+    /** Returns given branch's pointer (latest commit ID). */
     public static String getBranchPointer(String branch) {
         File branchPointer = join(BRANCH_POINTER_DIR, branch);
         if (!branchPointer.exists()) {
@@ -518,8 +506,8 @@ public class Repository {
         stagingArea.clear();
         saveStagingArea(stagingArea);
     }
-
 }
+
 
 
 

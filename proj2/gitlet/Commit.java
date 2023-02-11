@@ -10,8 +10,7 @@ import static gitlet.Utils.*;
 /** Represents a gitlet commit object.
  *
  *  @author Xiaoli Li
- */
-
+ *  */
 public class Commit implements Serializable {
 
     private final String message;
@@ -57,21 +56,24 @@ public class Commit implements Serializable {
         this.secondParentID = parentID;
     }
 
+    /** Stores a mapping of file names to blob references. */
     public TreeMap<String, String> getFilesMapping() {
         return this.filesMapping;
     }
-
+    /** Saves commit object to disk. */
     public void saveCommit(String commitID) {
         String abbrCommitID = commitID.substring(0, 8);
         File commit = join(OBJECTS_DIR, abbrCommitID);
         writeObject(commit, this);
     }
 
-    /** Helper methods to read commit info from disc. */
+    /** Returns the commit of the current branch. */
     public static Commit getCurrentCommit() {
         String commitID = Repository.getCurrentBranchPointer();
         return getCommit(commitID);
     }
+
+    /** Returns the commit with given commit ID. */
     public static Commit getCommit(String commitID) {
         if (commitID == null) {
             return null;
@@ -85,7 +87,8 @@ public class Commit implements Serializable {
         return readObject(commit, Commit.class);
     }
 
-    /** Generate file names array of all commits. */
+    /** Generates file names array of all commits.
+     * The length of commit file name should be 8. */
     public static List<String> commitFileNames() {
         List<String> files = plainFilenamesIn(OBJECTS_DIR);
         List<String> commitFiles = new ArrayList<>();
@@ -97,6 +100,19 @@ public class Commit implements Serializable {
         return commitFiles;
     }
 
+    /** Checks if one branch is the ancestor of current branch. */
+    public static boolean isAncestor(String otherBranchPointer, String currBranchPointer) {
+        while (currBranchPointer != null) {
+            if (currBranchPointer.equals(otherBranchPointer)) {
+                return true;
+            }
+            currBranchPointer = Commit.getCommit(currBranchPointer).getParentID();
+        }
+        return false;
+    }
+
+    /** Returns all the ancestors of a given commit,
+     * including second parents introduced by merging. */
     public static ArrayList<String> findAncestors(String commitID) {
         ArrayList<String> ancestors = new ArrayList<>();
         Queue<String> parents = new ArrayDeque<>();
@@ -123,6 +139,7 @@ public class Commit implements Serializable {
         return ancestors;
     }
 
+    /** Returns the latest common ancestor of two branches. */
     public static String findSpitPoint(String branch1, String branch2) {
         String commitID1 = Repository.getBranchPointer(branch1);
         String commitID2 = Repository.getBranchPointer(branch2);
@@ -140,6 +157,7 @@ public class Commit implements Serializable {
         return latestCommonAncestor;
     }
 }
+
 
 
 

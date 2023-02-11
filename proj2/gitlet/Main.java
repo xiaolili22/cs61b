@@ -5,6 +5,7 @@ import static gitlet.Utils.*;
 
 
 /** Driver class for Gitlet, a subset of the Git version-control system.
+ *
  *  @author Xiaoli Li
  */
 public class Main {
@@ -21,18 +22,18 @@ public class Main {
 
         String firstArg = args[0];
         switch(firstArg) {
-            /** Handle `init` command */
+            /** Usage: java gitlet.Main init */
             case "init":
                 validateNumArgs("init", args, 1);
                 Repository.initCommand();
                 break;
-            /** Handle `add [filename]` command */
+            /** Usage: java gitlet.Main add [file name] */
             case "add":
                 validateInit();
                 validateNumArgs("add", args, 2);
                 Repository.addCommand(args[1]);
                 break;
-            /** Handle `commit [message]` command */
+            /** Usage: java gitlet.Main commit [message] */
             case "commit":
                 validateInit();
                 if (args.length == 1 || args[1].trim().isEmpty()) {
@@ -42,39 +43,43 @@ public class Main {
                 validateNumArgs("commit", args, 2);
                 Repository.commitCommand(args[1]);
                 break;
-            /** Handle `remove` command */
+            /** Usage: java gitlet.Main rm [file name] */
             case "rm":
                 validateInit();
                 validateNumArgs("rm", args, 2);
                 Repository.removeCommand(args[1]);
                 break;
-            /** Handle `log` command */
+            /** Usage: java gitlet.Main log */
             case "log":
                 validateInit();
                 validateNumArgs("log", args, 1);
                 Repository.logCommand();
                 break;
+            /** Usage: java gitlet.Main global-log */
             case "global-log":
                 validateInit();
                 validateNumArgs("global-log", args, 1);
                 Repository.globalLogCommand();
                 break;
+            /** Usage: java gitlet.Main find [commit message] */
             case "find":
                 validateInit();
                 validateNumArgs("find", args, 2);
                 Repository.findCommand(args[1]);
                 break;
+            /** Usage: java gitlet.Main status */
             case "status":
                 validateInit();
                 validateNumArgs("status", args, 1);
                 Repository.statusCommand();
                 break;
+            /** Handles 3 use cases. */
             case "checkout":
                 validateInit();
                 /**
-                 * Handle checkout -- [file name]
-                 * Handle checkout [commit id] -- [file name]
-                 * Handle checkout [branch name]
+                 * java gitlet.Main checkout -- [file name]
+                 * java gitlet.Main checkout [commit id] -- [file name]
+                 * java gitlet.Main checkout [branch name]
                  * */
                 if (args.length == 3) {
                     if (!args[1].equals("--")) {
@@ -95,21 +100,25 @@ public class Main {
                     System.exit(0);
                 }
                 break;
+            /** Usage: java gitlet.Main branch [branch name] */
             case "branch":
                 validateInit();
                 validateNumArgs("branch", args, 2);
                 Repository.branchCommand(args[1]);
                 break;
+            /** Usage: java gitlet.Main rm-branch [branch name] */
             case "rm-branch":
                 validateInit();
                 validateNumArgs("rm-branch", args, 2);
                 Repository.removeBranchCommand(args[1]);
                 break;
+            /** Usage: java gitlet.Main reset [commit id] */
             case "reset":
                 validateInit();
                 validateNumArgs("reset", args, 2);
                 Repository.resetCommand(args[1]);
                 break;
+            /** Usage: java gitlet.Main merge [branch name] */
             case "merge":
                 validateInit();
                 validateNumArgs("merge", args, 2);
@@ -143,5 +152,6 @@ public class Main {
         }
     }
 }
+
 
 
