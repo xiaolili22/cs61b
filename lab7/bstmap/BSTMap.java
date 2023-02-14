@@ -25,10 +25,6 @@ public class BSTMap<K extends Comparable <K>, V> implements Map61B<K, V> {
     public BSTMap() {
     }
 
-    public boolean isEmpty() {
-        return size() == 0;
-    }
-
     @Override
     public void clear() {
         root = null;
