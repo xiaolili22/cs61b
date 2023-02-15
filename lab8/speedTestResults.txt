@@ -1,0 +1,81 @@
+BucketsSpeedTest
+------------------------------------------------------------
+------------------------------------------------------------
+
+Strings of length L: 20
+
+Enter # strings to insert into each map: 10000
+class hashmap.MyHashMapALBuckets: 0.02 sec
+class hashmap.MyHashMapLLBuckets: 0.01 sec
+class hashmap.MyHashMapTSBuckets: 0.01 sec
+class hashmap.MyHashMapHSBuckets: 0.01 sec
+class hashmap.MyHashMapPQBuckets: 0.01 sec
+------------------------------------------------------------
+
+Enter # strings to insert into each map: 50000
+class hashmap.MyHashMapALBuckets: 0.04 sec
+class hashmap.MyHashMapLLBuckets: 0.02 sec
+class hashmap.MyHashMapTSBuckets: 0.02 sec
+class hashmap.MyHashMapHSBuckets: 0.02 sec
+class hashmap.MyHashMapPQBuckets: 0.02 sec
+------------------------------------------------------------
+
+What would you like L to be?: 10
+
+Enter # strings to insert into each map: 100000
+class hashmap.MyHashMapALBuckets: 0.07 sec
+class hashmap.MyHashMapLLBuckets: 0.04 sec
+class hashmap.MyHashMapTSBuckets: 0.05 sec
+class hashmap.MyHashMapHSBuckets: 0.04 sec
+class hashmap.MyHashMapPQBuckets: 0.05 sec
+------------------------------------------------------------
+
+InsertInOrderSpeedTest
+------------------------------------------------------------
+------------------------------------------------------------
+
+Enter # strings to insert into hashmap.ULLMap: 10000
+class hashmap.ULLMap: 0.53 sec
+
+Enter # strings to insert into hashmap.MyHashMap: 10000
+class hashmap.MyHashMap: 0.03 sec
+
+Enter # strings to insert into Java's HashMap: 10000
+Java's Built-in HashMap: 0.01 sec
+------------------------------------------------------------
+
+Enter # strings to insert into hashmap.ULLMap: 30000
+class hashmap.ULLMap: 5.23 sec
+
+Enter # strings to insert into hashmap.MyHashMap: 30000
+class hashmap.MyHashMap: 0.03 sec
+
+Enter # strings to insert into Java's HashMap: 30000
+Java's Built-in HashMap: 0.01 sec
+------------------------------------------------------------
+
+InsertRandomSpeedTest
+------------------------------------------------------------
+------------------------------------------------------------
+
+What would you like L to be?: 20
+
+Enter # strings to insert into hashmap.ULLMap: 10000
+class hashmap.ULLMap: 0.35 sec
+
+Enter # strings to insert into your hashmap.MyHashMap: 10000
+class hashmap.MyHashMap: 0.02 sec
+
+Enter # strings to insert into Java's HashMap: 10000
+Java's Built-in HashMap: 0.01 sec
+------------------------------------------------------------
+
+Enter # strings to insert into hashmap.ULLMap: 30000
+class hashmap.ULLMap: 2.74 sec
+
+Enter # strings to insert into your hashmap.MyHashMap: 30000
+class hashmap.MyHashMap: 0.02 sec
+
+Enter # strings to insert into Java's HashMap: 30000
+Java's Built-in HashMap: 0.04 sec
+------------------------------------------------------------
